@@ -1,0 +1,17 @@
+<package>
+  <description brief="speech_interpreter">
+
+     speech_interpreter
+
+  </description>
+  <author>Jos Elfring</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/speech_interpreter</url>
+  <depend package="roscpp"/>
+  <depend package="std_srvs"/>
+  <depend package="std_msgs"/>
+
+</package>
+
+

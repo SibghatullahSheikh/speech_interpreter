@@ -1,0 +1,5 @@
+string type      # either "name", "location" or "object"
+uint32 n_tries
+float32 time_out
+---
+string answer
