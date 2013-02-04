@@ -1,4 +1,4 @@
-string type      # either "name", "location" or "object"
+string type      # either "name" or location or object categories defined in speech_interpreter/src/interpreter.cpp
 uint32 n_tries
 float32 time_out
 ---
