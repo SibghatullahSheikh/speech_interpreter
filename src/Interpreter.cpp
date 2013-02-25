@@ -177,7 +177,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 
 	// Initial response should be empty
 	res.action = "";
-	res.start_location = "entrance";
+	res.start_location = "meeting_point";
 	res.end_location = "";
 	res.object = "";
 
@@ -254,9 +254,9 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 
 	}
 
-	// If not asked for a location, end location is entrance (in case of get me, give me)
+	// If not asked for a location, end location is meeting_point (in case of get me, give me)
 	if (res.end_location.empty()) {
-		res.end_location = "entrance";
+		res.end_location = "meeting_point";
 		// TODO Note point action does not need an end location, in that case start location can be ignored
 	}
 
@@ -401,6 +401,10 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 		}
 
 		// If no answer, ask again
+
+
+
+
 		else {
 			result = "no_answer";
 			amigoSpeak("I did not hear you");
