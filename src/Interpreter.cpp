@@ -427,6 +427,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 void Interpreter::amigoSpeak(std::string txt) {
     if(ros::param::has("/text_to_speech"))
         {
+            ROS_INFO("%s", txt.c_str());
             text_to_speech_philips::amigo_speakup_advanced speak;
 
             speak.request.sentence = txt;
