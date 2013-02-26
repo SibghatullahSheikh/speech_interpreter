@@ -9,6 +9,9 @@
 
 #include "std_srvs/Empty.h"
 
+#include <text_to_speech_philips/amigo_speakup_advanced.h>
+
+ros::ServiceClient pub_speech_;
 
 namespace SpeechInterpreter {
 
@@ -26,6 +29,8 @@ Interpreter::Interpreter() : answer_("") {
 	// Offer services
 	info_service_ = nh.advertiseService("get_info_user", &Interpreter::getInfo, this);
 	action_service_ = nh.advertiseService("get_action_user", &Interpreter::getAction, this);
+
+    pub_speech_ =  nh.serviceClient<text_to_speech_philips::amigo_speakup_advanced>("/amigo_speakup_advanced");
 
 }
 
@@ -420,9 +425,22 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
  * Function that makes AMIGO speak
  */
 void Interpreter::amigoSpeak(std::string txt) {
+    if(ros::param::has("/text_to_speech"))
+        {
+            text_to_speech_philips::amigo_speakup_advanced speak;
 
-	// TODO Should be connected to the text to speech module topic
-	ROS_INFO("%s", txt.c_str());
+            speak.request.sentence = txt;
+            speak.request.language = "us";
+            speak.request.character = "kyle";
+            speak.request.voice = "default";
+            speak.request.emotion = "excited";
+            pub_speech_.call(speak);
+        }
+    else
+        {
+        // TODO Should be connected to the text to speech module topic
+        ROS_INFO("%s", txt.c_str());
+        }
 }
 
 
