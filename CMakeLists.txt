@@ -30,3 +30,5 @@ rosbuild_gensrv()
 #target_link_libraries(example ${PROJECT_NAME})
 
 rosbuild_add_executable(interpreter src/speech_interpreter.cpp src/Interpreter.cpp)
+rosbuild_add_executable(interpreter_no_talk src/speech_interpreter.cpp src/Interpreter_no_talk.cpp)
+
