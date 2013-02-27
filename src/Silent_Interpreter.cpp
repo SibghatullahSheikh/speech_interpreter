@@ -422,5 +422,6 @@ void Interpreter::amigoSpeak(std::string txt) {
         // TODO Should be connected to the text to speech module topic
         ROS_INFO("%s", txt.c_str());
 
+
 }
 }
