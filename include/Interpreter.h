@@ -69,6 +69,7 @@ public:
     int getLineNumber (std::string text_at_line);
     std::string getTextWithSpaces(int number);
 
+    void setColor(int r, int g, int b);
 
 	// Services
 	ros::ServiceServer info_service_;
@@ -85,6 +86,11 @@ public:
 
 	// Reponse user
 	std::string answer_;
+
+    ros::Publisher set_rgb_lights_;
+
+private:
+    bool iExplainedLights;
 };
 
 }

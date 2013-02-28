@@ -11,7 +11,6 @@
 
 #include <text_to_speech_philips/amigo_speakup_advanced.h>
 
-// Erik:
 #include <iostream>
 #include <fstream>
 using std::ifstream;
@@ -19,8 +18,12 @@ using std::cerr;
 using std::cout;
 #include <ros/package.h>
 
+#include <std_msgs/ColorRGBA.h>
+#include <amigo_msgs/RGBLightCommand.h>
+
 
 ros::ServiceClient pub_speech_;
+//ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
 
 namespace SpeechInterpreter {
 
@@ -41,6 +44,9 @@ Interpreter::Interpreter() : answer_("") {
 
     pub_speech_ =  nh.serviceClient<text_to_speech_philips::amigo_speakup_advanced>("/amigo_speakup_advanced");
 
+    set_rgb_lights_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 100);
+
+    iExplainedLights = false;
 }
 
 Interpreter::~Interpreter() {
@@ -198,7 +204,17 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	// Get the action from the user
 	double time_out_action = req.time_out;
 	ROS_INFO("I will get you an action within %f seconds", time_out_action);
-	double t_start = ros::Time::now().toSec();
+    double t_start = ros::Time::now().toSec();
+
+    if (iExplainedLights == false) {
+        // Explain lights during questioning:
+        // Red: Amigo talks
+        // Green: Questioner talks
+        setColor(1,0,0); // color red
+        std::string explaing_txt = "If my lights are red during questioning, I will talk and when my lights are green during questioning, you will talk.";
+        amigoSpeak(explaing_txt);
+        iExplainedLights = true;
+    }
 
 	// Get action description
 	int max_num_tries_action = 1e6;
@@ -208,7 +224,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	// Check action type that is requested
 	for (std::map<std::string, std::string>::const_iterator it = action_map_.begin(); it != action_map_.end(); ++it) {
 		if (action.find(it->first) != std::string::npos) {
-			ROS_DEBUG("Action includes %s which is a %s action", it->first.c_str(), it->second.c_str());
+            ROS_DEBUG("Action includes %s which is a %s action", it->first.c_str(), it->second.c_str());
 			res.action = it->second;
 			break;
 		}
@@ -273,7 +289,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 		res.end_location = "meeting_point";
 		// TODO Note point action does not need an end location, in that case start location can be ignored
 	}
-
+    setColor(0,0,1); // color blue
 	return true;
 }
 
@@ -289,8 +305,6 @@ void Interpreter::speechCallback(std_msgs::String res) {
 		ROS_DEBUG("Received response: %s", res.data.c_str());
 	}
 }
-
-
 
 /**
  * Function that switches on the requested speech recognition module and waits for an answer over the appropriate topic
@@ -308,7 +322,12 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
 	// Turn on speech recognition for requested category
 	if (!category_srv_clients_map_[category].first.call(srv)) {
 		ROS_WARN("Unable to turn on speech recognition for %s", category.c_str());
-	} else ROS_INFO("Switched on speech recognition for: %s", category.c_str());
+    }
+    else {
+        ROS_INFO("Switched on speech recognition for: %s", category.c_str());
+        setColor(0,1,0); // color green
+    }
+
 
 	answer_.clear();
 	double start_time = ros::Time::now().toSec();
@@ -347,28 +366,28 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 	std::string vowels = "auioe";
 	bool start_with_vowel = (vowels.find(type[0])< vowels.length());
 
-
 	// Determine first question
     std::string txt = "", starting_txt, result = "";
 	if (type == "name") {
-		starting_txt = "can you give me your name?";
+        starting_txt = "Can you give me your name?";
 	} else if (type == "action") {
         // Remap type such that it matches the topic name
         type = "sentences";
-		starting_txt = "what do you want me to do?";
+        starting_txt = "What can I do for you?";
 
 	} else {
 		std::string art = (start_with_vowel)?"an ":"a ";
-		starting_txt = "can you give me " + art + type;
+        starting_txt = "Can you give me " + art + type;
 	}
 
-	while (ros::Time::now().toSec() - t_start < time_out && n_tries < n_tries_max) {
+    while (ros::Time::now().toSec() - t_start < time_out && n_tries < n_tries_max) {
 
         // Ask
         amigoSpeak(starting_txt);
 
         // If an answer was heared, verify
         if (waitForAnswer(type, t_max_question)) {
+            setColor(1,0,0); // color red
             result = answer_;
             int line_number;
             std::string result2;
@@ -386,14 +405,13 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 amigoSpeak("Is that correct?");
             }
 
-
             // If answer received, ask for confirmation
 			if (waitForAnswer("yesno", t_max_question)) {
-
+                setColor(1,0,0); // color red
 				// Check if answer is confirmed
 				if (answer_ == "yes" || answer_ == "y") {
                     amigoSpeak("Allright then.");
-					break;
+                    break;
 				} else {
 					result = "wrong_answer";
                     amigoSpeak("I'm sorry, we will try it again.");
@@ -403,6 +421,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 
 			// If no answer heard to confirmation question, ask for confirmation again
 			else {
+                setColor(1,0,0); // color red
                 if ( type == "sentences") {
                     // TODO: in ROSINFO ", is that correct?" is shown at the beginning of ROS_INFO. Amigo still says it the wright way.
                     txt = "I did not hear you, did you say " + result2;
@@ -415,10 +434,10 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 
                 // Check if the answer is confirmed after the second confirmation question
 				if (waitForAnswer("yesno", t_max_question)) {
-
+                    setColor(1,0,0); // color red
 					// Check if answer is confirmed (second time)
 					if (answer_ == "yes" || answer_ == "y") {
-						amigoSpeak("Thank you.");
+                        amigoSpeak("Allright then.");
 						break;
 					} else {
 						result = "wrong_answer";
@@ -429,6 +448,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 
 				// Second confirmation question again did not lead to a yes or no, start all over again
 				else {
+                    setColor(1,0,0); // color red
 					result = "no_answer";
 					amigoSpeak("I did not hear you");
 					++n_tries;
@@ -437,9 +457,6 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 		}
 
 		// If no answer, ask again
-
-
-
 
 		else {
 			result = "no_answer";
@@ -501,9 +518,9 @@ int Interpreter::getLineNumber(std::string text_at_line) {
                 i++;
             }
             myfile.close();
-        }
-    return i;
     }
+    return i;
+}
 
 /**
  * Function that gets the line number of the spoken input in gpsr_without_spaces.txt
@@ -519,10 +536,8 @@ std::string Interpreter::getTextWithSpaces(int number) {
         {
             cerr<<"\nThe file could not be opened.\n";
             line = "File could not be opened";
-
             return line;
         }
-
     int i = 0;
 
     if (myfile.is_open())
@@ -535,7 +550,23 @@ std::string Interpreter::getTextWithSpaces(int number) {
             myfile.close();
         }
     return line;
-    }
+}
+
+void Interpreter::setColor(int r, int g, int b){
+
+    std_msgs::ColorRGBA rgba;
+    rgba.r = r;
+    rgba.g = g;
+    rgba.b = b;
+    rgba.a = 1;
+
+    amigo_msgs::RGBLightCommand rgb_msg;
+
+    rgb_msg.color = rgba;
+    rgb_msg.show_color.data = true;
+    set_rgb_lights_.publish(rgb_msg);
+}
+
 
 
 }
