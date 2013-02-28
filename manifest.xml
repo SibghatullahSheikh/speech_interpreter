@@ -11,6 +11,7 @@
   <depend package="roscpp"/>
   <depend package="std_srvs"/>
   <depend package="std_msgs"/>
+  <depend package="roslib"/>
 
   <!-- dependent on text_to_speech so that amigo can talk with you -->
   <depend package="text_to_speech_philips"/>

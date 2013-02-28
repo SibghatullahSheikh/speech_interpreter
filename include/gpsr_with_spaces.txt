@@ -1,0 +1,64 @@
+bring a drink to a seat
+bring a drink to a table
+bring a drink to a shelf
+bring a drink to a bin
+bring a drink to a nappliance
+bring a snack to a seat
+bring a snack to a table
+bring a snack to a shelf
+bring a snack to a bin
+bring a snack to an appliance
+bring the bathroomstuff to a seat
+bring the bathroomstuff to a table
+bring the bathroomstuff to a shelf
+bring the bathroomstuff to a bin
+bring the bathroomstuff to an appliance
+bring some food to a seat
+bring some food to a table
+bring some food to a shelf
+bring some food to a bin
+bring some food to an appliance
+carry a drink to a seat
+carry a drink to a table
+carry a drink to a shelf
+carry a drink to a bin
+carry a drink to an appliance
+carry a snack to a seat
+carry a snack to a table
+carry a snack to a shelf
+carry a snack to a bin
+carry a snack to an appliance
+carry the bathroomstuff to a seat
+carry the bathroomstuff to a table
+carry the bathroomstuff to a shelf
+carry the bathroomstuff to a bin
+carry the bathroomstuff to an appliance
+carry some food to a seat
+carry some food to a table
+carry some food to a shelf
+carry some food to a bin
+carry some food to an appliance
+get me a drink
+get me a snack
+get me the bathroomstuff
+get me some food
+give me a drink
+give me a snack
+give me the bathroomstuff
+give me some food
+point at a seat
+point at a table
+point at a shelf
+point at a bin
+point at an appliance
+go to an exit
+move to an exit
+navigate to an exit
+detect a drink
+detect a snack
+detect the bathroomstuff
+detect some food
+find a drink
+find a snack
+find the bathroomstuff
+find some food

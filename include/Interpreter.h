@@ -62,6 +62,14 @@ public:
 	 */
 	void amigoSpeak(std::string txt);
 
+    /**
+     * Get line number of spoken text without spaces in gpsr_without_spaces.txt
+     * And get the text from gpsr_with_spaces.txt
+     */
+    int getLineNumber (std::string text_at_line);
+    std::string getTextWithSpaces(int number);
+
+
 	// Services
 	ros::ServiceServer info_service_;
 	ros::ServiceServer action_service_;

@@ -11,6 +11,15 @@
 
 #include <text_to_speech_philips/amigo_speakup_advanced.h>
 
+// Erik:
+#include <iostream>
+#include <fstream>
+using std::ifstream;
+using std::cerr;
+using std::cout;
+#include <ros/package.h>
+
+
 ros::ServiceClient pub_speech_;
 
 namespace SpeechInterpreter {
@@ -207,7 +216,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 
 	// Check if action is known
 	if (res.action.empty()) {
-		ROS_ERROR("Code error: Action %s received over speech_sentences/output topic does not contain a known action", action.c_str());
+        ROS_ERROR("Code error: Action %s received over speech_sentences/output topic does not contain a known action", action.c_str());
 		return false;
 	}
 
@@ -215,7 +224,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	std::map<std::string, std::vector<std::string> >::const_iterator it_action = action_category_map_.find(res.action);
 	if (it_action == action_category_map_.end()) {
 		ROS_DEBUG("All information is available, no need to ask questions");
-		amigoSpeak("I know everything I need to know, I will go to an exit now");
+        amigoSpeak("I know everything I need to know, I will go to an exit now");
 		res.end_location = "exit";
 		res.action = "leave";
 		return true;
@@ -340,14 +349,14 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 
 
 	// Determine first question
-	std::string txt = "", starting_txt, result = "";
+    std::string txt = "", starting_txt, result = "";
 	if (type == "name") {
 		starting_txt = "can you give me your name?";
 	} else if (type == "action") {
+        // Remap type such that it matches the topic name
+        type = "sentences";
 		starting_txt = "what do you want me to do?";
 
-		// Remap type such that it matches the topic name
-		type = "sentences";
 	} else {
 		std::string art = (start_with_vowel)?"an ":"a ";
 		starting_txt = "can you give me " + art + type;
@@ -355,34 +364,56 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 
 	while (ros::Time::now().toSec() - t_start < time_out && n_tries < n_tries_max) {
 
-		// Ask
-		amigoSpeak(starting_txt);
+        // Ask
+        amigoSpeak(starting_txt);
 
-		// If an answer was heared, verify
-		if (waitForAnswer(type, t_max_question)) {
-			result = answer_;
-			amigoSpeak("I heard " + answer_ + ", is that correct?");
+        // If an answer was heared, verify
+        if (waitForAnswer(type, t_max_question)) {
+            result = answer_;
+            int line_number;
+            std::string result2;
 
-			// If answer received, ask for confirmation
+            if ( type == "sentences") {
+                line_number = getLineNumber(answer_);
+                result2 = getTextWithSpaces(line_number);
+
+                // TODO: in ROSINFO ", is that correct?" is shown at the beginning of ROS_INFO. Amigo still says it the wright way.
+                amigoSpeak("I heard " + result2);
+                amigoSpeak("Is that correct?");
+            }
+            else {
+                amigoSpeak("I heard " + result);
+                amigoSpeak("Is that correct?");
+            }
+
+
+            // If answer received, ask for confirmation
 			if (waitForAnswer("yesno", t_max_question)) {
 
 				// Check if answer is confirmed
 				if (answer_ == "yes" || answer_ == "y") {
-					amigoSpeak("Thank you.");
+                    amigoSpeak("Allright then.");
 					break;
 				} else {
 					result = "wrong_answer";
-					amigoSpeak("I heard the wrong answer");
+                    amigoSpeak("I'm sorry, we will try it again.");
 					++n_tries;
 				}
 			}
 
 			// If no answer heard to confirmation question, ask for confirmation again
 			else {
-				txt = "I did not hear you, did you say " + result + "?";
-				amigoSpeak(txt);
+                if ( type == "sentences") {
+                    // TODO: in ROSINFO ", is that correct?" is shown at the beginning of ROS_INFO. Amigo still says it the wright way.
+                    txt = "I did not hear you, did you say " + result2;
+                    amigoSpeak(txt);
+                }
+                else {
+                    txt = "I did not hear you, did you say " + result + "?";
+                    amigoSpeak(txt);
+                }
 
-				// Check if the answer is confirmed after the second confirmation question
+                // Check if the answer is confirmed after the second confirmation question
 				if (waitForAnswer("yesno", t_max_question)) {
 
 					// Check if answer is confirmed (second time)
@@ -391,7 +422,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 						break;
 					} else {
 						result = "wrong_answer";
-						amigoSpeak("I heard the wrong answer");
+                        amigoSpeak("I'm sorry, we will try it again.");
 						++n_tries;
 					}
 				}
@@ -444,6 +475,67 @@ void Interpreter::amigoSpeak(std::string txt) {
         }
 }
 
+/**
+ * Function that gets the line number of the spoken input in gpsr_without_spaces.txt
+ */
+int Interpreter::getLineNumber(std::string text_at_line) {
+
+    std::string path = ros::package::getPath("speech_interpreter") + "/include/gpsr_without_spaces.txt";
+
+    ifstream myfile;
+    myfile.open(path.c_str());
+    std::string line;
+    if(myfile.fail())
+        {
+            cerr<<"\nThe file could not be opened.\n";
+            return -1;
+        }
+
+    int i = 0;
+
+    if (myfile.is_open())
+        {
+            while (! myfile.eof() && ! (line == text_at_line))
+            {
+                getline (myfile,line);
+                i++;
+            }
+            myfile.close();
+        }
+    return i;
+    }
+
+/**
+ * Function that gets the line number of the spoken input in gpsr_without_spaces.txt
+ */
+std::string Interpreter::getTextWithSpaces(int number) {
+
+    std::string path = ros::package::getPath("speech_interpreter") + "/include/gpsr_with_spaces.txt";
+
+    ifstream myfile;
+    myfile.open(path.c_str());
+    std::string line;
+    if(myfile.fail())
+        {
+            cerr<<"\nThe file could not be opened.\n";
+            line = "File could not be opened";
+
+            return line;
+        }
+
+    int i = 0;
+
+    if (myfile.is_open())
+        {
+            while (! myfile.eof() && ! (i == number))
+            {
+                getline (myfile,line);
+                i++;
+            }
+            myfile.close();
+        }
+    return line;
+    }
 
 
 }
