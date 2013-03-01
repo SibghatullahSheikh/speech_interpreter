@@ -28,7 +28,9 @@ rosbuild_gensrv()
 #rosbuild_link_boost(${PROJECT_NAME} thread)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
+
 file(GLOB_RECURSE HEADER_FILES include/*.h)
+
 rosbuild_add_executable(interpreter src/speech_interpreter.cpp src/Interpreter.cpp)
 rosbuild_add_executable(silent_interpreter src/speech_interpreter.cpp src/Silent_Interpreter.cpp)
 

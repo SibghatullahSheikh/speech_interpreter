@@ -41,6 +41,7 @@ Interpreter::Interpreter() : answer_("") {
 	// Offer services
 	info_service_ = nh.advertiseService("get_info_user", &Interpreter::getInfo, this);
 	action_service_ = nh.advertiseService("get_action_user", &Interpreter::getAction, this);
+    continue_service_ = nh.advertiseService("get_continue", &Interpreter::getContinue, this);
 
     pub_speech_ =  nh.serviceClient<text_to_speech_philips::amigo_speakup_advanced>("/amigo_speakup_advanced");
 
@@ -123,6 +124,7 @@ void Interpreter::initializeSpeechServicesTopics(ros::NodeHandle& nh) {
 	fixed_list.push_back("yesno");     // TODO this should be loaded from yaml?
 	fixed_list.push_back("name");      // TODO this should be loaded from yaml?
 	fixed_list.push_back("sentences"); // TODO this should be loaded from yaml?
+    fixed_list.push_back("continue"); // TODO this should be loaded from yaml?
 	for (std::vector<std::string>::const_iterator it = fixed_list.begin(); it != fixed_list.end(); ++it) {
 		//ROS_INFO("Creating start and stop services for %s", it->c_str());
 		category_srv_clients_map_[(*it)] =
@@ -217,8 +219,8 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
     }
 
 	// Get action description
-	int max_num_tries_action = 1e6;
-	std::string action = askUser("action", max_num_tries_action, time_out_action);
+    int max_num_tries_action = 1e6;
+    std::string action = askUser("action", max_num_tries_action, time_out_action);
 	ROS_DEBUG("Received action %s, %f seconds left for refining action", action.c_str(), ros::Time::now().toSec() - t_start);
 
 	// Check action type that is requested
@@ -567,6 +569,43 @@ void Interpreter::setColor(int r, int g, int b){
     set_rgb_lights_.publish(rgb_msg);
 }
 
+
+/**
+ * Service that asks if user says continue
+ */
+bool Interpreter::getContinue(speech_interpreter::GetContinue::Request  &req, speech_interpreter::GetContinue::Response &res) {
+
+    // Get variables
+    unsigned int n_tries_max = req.n_tries_max;
+    double time_out = req.time_out;
+    const double t_max_question = std::max(time_out, time_out/(2.0*n_tries_max));
+    unsigned int n_tries = 0;
+
+    ROS_INFO("I will try to receive continue %d tries and time out of %f", n_tries_max, time_out);
+
+    while (n_tries < n_tries_max) {
+
+        if (waitForAnswer("continue", t_max_question)) {
+            setColor(1,0,0); // color red
+            //amigoSpeak("I heard continue");
+            res.answer = "true";
+            setColor(0,0,1); // color blue
+            return true;
+        } else {
+            setColor(1,0,0); // color red
+            amigoSpeak("I did not hear continue.");
+            res.answer = "false";
+            n_tries++;
+            if (!(n_tries == n_tries_max)){
+                amigoSpeak("Let's try again");
+            }
+        }
+    }
+    setColor(0,0,1); // color blue
+
+    return true;
+
+}
 
 
 }
