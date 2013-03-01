@@ -149,7 +149,7 @@ bool Interpreter::getInfo(speech_interpreter::GetInfo::Request  &req, speech_int
 
 	// Get variables
 	std::string type = req.type.data();
-	unsigned int n_tries = req.n_tries;
+    unsigned int n_tries = req.n_tries;
 	double time_out = req.time_out;
 
 	// Convert to lower case
@@ -382,10 +382,10 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         starting_txt = "Can you give me " + art + type;
 	}
 
-    while (ros::Time::now().toSec() - t_start < time_out && n_tries < n_tries_max) {
+    // Ask
+    amigoSpeak(starting_txt);
 
-        // Ask
-        amigoSpeak(starting_txt);
+    while (ros::Time::now().toSec() - t_start < time_out && n_tries < n_tries_max) {
 
         // If an answer was heared, verify
         if (waitForAnswer(type, t_max_question)) {
@@ -451,7 +451,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 				// Second confirmation question again did not lead to a yes or no, start all over again
 				else {
                     setColor(1,0,0); // color red
-					result = "no_answer";
+                    result = "no_answer";
 					amigoSpeak("I did not hear you");
 					++n_tries;
 				}
@@ -461,9 +461,13 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 		// If no answer, ask again
 
 		else {
-			result = "no_answer";
+            setColor(1,0,0); // color red
+            result = "no_answer";
 			amigoSpeak("I did not hear you");
-			++n_tries;
+            ROS_INFO("n_tries before = %i", n_tries);
+            ++n_tries;
+            ROS_INFO("n_tries after = %i", n_tries);
+            ROS_INFO("n_tries_max = %i", n_tries_max);
 		}
 	}
 
