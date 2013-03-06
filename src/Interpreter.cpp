@@ -416,7 +416,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                     break;
 				} else {
 					result = "wrong_answer";
-                    amigoSpeak("I'm sorry, we will try it again.");
+                    amigoSpeak("I'm sorry, we will try it again. Could you please repeat it?");
 					++n_tries;
 				}
 			}
@@ -443,7 +443,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 						break;
 					} else {
 						result = "wrong_answer";
-                        amigoSpeak("I'm sorry, we will try it again.");
+                        amigoSpeak("I'm sorry, we will try it again. Could you please repeat it?");
 						++n_tries;
 					}
 				}
