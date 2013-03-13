@@ -4,3 +4,5 @@ string action
 string start_location
 string end_location
 string object
+string object_room
+string object_location

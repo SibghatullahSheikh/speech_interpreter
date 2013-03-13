@@ -67,7 +67,7 @@ void Interpreter::initializeMappings(ros::NodeHandle& nh) {
 	action_map_["point"] = "point";
 	action_map_["detect"] = "find";
 	action_map_["find"] = "find";
-	action_map_["go"] = "leave";
+    action_map_["go"] = "leave";
 	action_map_["move"] = "leave";
 	action_map_["navigate"] = "leave";
 
@@ -82,13 +82,18 @@ void Interpreter::initializeMappings(ros::NodeHandle& nh) {
 	category_map_["location_category"].push_back(std::make_pair("appliance", 3));
 	category_map_["location_category"].push_back(std::make_pair("bin", 1));
 
+    category_map_["room_category"].push_back(std::make_pair("room", 4));
+    category_map_["room_location_category"].push_back(std::make_pair("bedroom", 3));
+    category_map_["room_location_category"].push_back(std::make_pair("livingroom", 7));
+    category_map_["room_location_category"].push_back(std::make_pair("kitchen", 5));
+    category_map_["room_location_category"].push_back(std::make_pair("lobby", 3));
+
 	// Action category map
 	action_category_map_["transport"].push_back("object_category");
 	action_category_map_["transport"].push_back("location_category");
 	action_category_map_["get"].push_back("object_category");
 	action_category_map_["find"].push_back("object_category");
 	action_category_map_["point"].push_back("object_category");
-
 }
 
 void Interpreter::initializeSpeechServicesTopics(ros::NodeHandle& nh) {
@@ -148,9 +153,9 @@ void Interpreter::initializeSpeechServicesTopics(ros::NodeHandle& nh) {
 bool Interpreter::getInfo(speech_interpreter::GetInfo::Request  &req, speech_interpreter::GetInfo::Response &res) {
 
 	// Get variables
-	std::string type = req.type.data();
+    std::string type = req.type.data();
     unsigned int n_tries = req.n_tries;
-	double time_out = req.time_out;
+    double time_out = req.time_out;
 
 	// Convert to lower case
 	std::transform(type.begin(), type.end(), type.begin(), ::tolower);
@@ -182,7 +187,7 @@ bool Interpreter::getInfo(speech_interpreter::GetInfo::Request  &req, speech_int
 		}
 	}
 
-	response = askUser(type, n_tries, time_out);
+    response = askUser(type, n_tries, time_out);
 	ROS_INFO("Answer is %s", response.c_str());
 
 	res.answer = response;
@@ -202,6 +207,8 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	res.start_location = "meeting_point";
 	res.end_location = "";
 	res.object = "";
+    res.object_room = "";
+    res.object_location = "";
 
 	// Get the action from the user
 	double time_out_action = req.time_out;
@@ -221,9 +228,9 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	// Get action description
     int max_num_tries_action = 1e6;
     std::string action = askUser("action", max_num_tries_action, time_out_action);
-	ROS_DEBUG("Received action %s, %f seconds left for refining action", action.c_str(), ros::Time::now().toSec() - t_start);
+    ROS_DEBUG("Received action %s, %f seconds left for refining action", action.c_str(), ros::Time::now().toSec() - t_start);
 
-	// Check action type that is requested
+    // Check action type that is requested
 	for (std::map<std::string, std::string>::const_iterator it = action_map_.begin(); it != action_map_.end(); ++it) {
 		if (action.find(it->first) != std::string::npos) {
             ROS_DEBUG("Action includes %s which is a %s action", it->first.c_str(), it->second.c_str());
@@ -238,7 +245,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 		return false;
 	}
 
-	// All actions in action_map_ must be defined in action_category_map_ as well
+    // All actions in action_map_ must be defined in action_category_map_ as well
 	std::map<std::string, std::vector<std::string> >::const_iterator it_action = action_category_map_.find(res.action);
 	if (it_action == action_category_map_.end()) {
 		ROS_DEBUG("All information is available, no need to ask questions");
@@ -250,7 +257,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 
 	// Ask for additional information
 	for (std::vector<std::string>::const_iterator it = it_action->second.begin(); it != it_action->second.end(); ++it) {
-		ROS_DEBUG("%s is needed", it->c_str());
+        ROS_DEBUG("%s is needed", it->c_str());
 
 		// Check which instance of the object/location is already given
 		std::string response = "";
@@ -264,15 +271,121 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 				if (it_cat->second > 1) {
 
 					// TODO Now fixed maximum number of attempts, change?
-					ROS_DEBUG("%s has %d possible values, need to ask user for more information", it_cat->first.c_str(), it_cat->second);
+                    ROS_DEBUG("%s has %d possible values, need to ask user for more information", it_cat->first.c_str(), it_cat->second);
 					amigoSpeak("I am sorry, but I need more information. Can you be more specific?");
-					response = askUser(it_cat->first, 5, ros::Time::now().toSec() - t_start);
+                    response = askUser(it_cat->first, 5, time_out_action - (ros::Time::now().toSec() - t_start));
 
 				} else {
-					ROS_DEBUG("%s has only one possible value", it_cat->first.c_str());
+                    ROS_DEBUG("%s has only one possible value", it_cat->first.c_str());
 					amigoSpeak("I only know one " + it_cat->first);
 					response = it_cat->first;
 				}
+
+                // If category is object, location is queried. First which room -> if yes -> which specific location?
+                unsigned int n_tries = 0;
+                bool heard_one_answer = false;
+                bool object_room_known = false;
+                std::string response_object_room = "";
+                if ((*it) == "object_category") {
+                    while (ros::Time::now().toSec() - t_start < (time_out_action - (ros::Time::now().toSec() - t_start))) {
+
+                        // Check if the response starts with a vowel
+                        std::string vowels = "auioe";
+                        bool start_with_vowel = (vowels.find(response[0])< vowels.length());
+
+                        std::string art = (start_with_vowel)?"an ":"a ";
+                        std::string starting_txt = "Do you know in which room I can find " + art + response;
+                        amigoSpeak(starting_txt);
+
+                        while (n_tries < 5) {
+                            if (waitForAnswer("yesno", 10.0)) {
+                                setColor(1,0,0); // color red
+                                // Check if answer is confirmed
+                                if (answer_ == "yes" || answer_ == "y") {
+                                    amigoSpeak("Allright then.");
+                                    object_room_known = true;
+                                    response_object_room = askUser("room", 5, time_out_action - (ros::Time::now().toSec() - t_start));
+                                    if (response_object_room == "no_answer") {
+                                        object_room_known = false;
+                                    }
+                                    break;
+                                } else {
+                                    if (!heard_one_answer && !(answer_ == "no")) {
+                                        amigoSpeak("Could you please answer with yes or no?");
+                                        heard_one_answer = true;
+                                        ++n_tries;
+                                    }
+                                    else {
+                                        amigoSpeak("Allright, you do not know where it is, I will try to find it myself.");
+                                        break;
+                                    }
+                                }
+                            }
+                            else {
+                                amigoSpeak("I did not hear you, could you repeat your answer");
+                                ++n_tries;
+                            }
+                        }
+
+                        // If room is not known, room and exact locations will be unknown. Else continue asking specific location
+                        if (!object_room_known) {
+                            res.object_room = "room_not_known";
+                            res.object_location = "location_not_known";
+                            break;
+                        }
+                        else {
+                            res.object_room = response_object_room;
+                            std::string starting_txt = "Since you know the room, do you also know the specific location to find " + art + response;
+                            amigoSpeak(starting_txt);
+                            n_tries = 0;
+                            bool object_location_known = false;
+                            std::string response_object_location = "";
+
+                            while (n_tries < 5) {
+                                if (waitForAnswer("yesno", 10.0)) {
+                                    setColor(1,0,0); // color red
+                                    // Check if answer is confirmed
+                                    if (answer_ == "yes" || answer_ == "y") {
+                                        amigoSpeak("Allright then.");
+                                        object_location_known = true;
+                                        response_object_location = askUser(response_object_room, 5, time_out_action - (ros::Time::now().toSec() - t_start));
+                                        if (response_object_location == "no_answer") {
+                                            object_location_known = false;
+                                            std::string txt_room = "Allright, you do not know where it is exactly, I will look in the " + response_object_room;
+                                            amigoSpeak(txt_room);
+                                        }
+                                        break;
+                                    } else {
+                                        if (!heard_one_answer && !(answer_ == "no")) {
+                                            amigoSpeak("Could you please answer with yes or no?");
+                                            heard_one_answer = true;
+                                            ++n_tries;
+                                        }
+                                        else {
+                                            std::string txt_room = "Allright, you do not know where it is exactly, I will look in the " + response_object_room;
+                                            amigoSpeak(txt_room);
+                                            break;
+                                        }
+                                    }
+                                }
+                                else {
+                                    amigoSpeak("I did not hear you, could you repeat your answer");
+                                    ++n_tries;
+                                }
+                            }
+
+                            // Check if location object is known.
+                            if (!object_location_known) {
+                                res.object_location = "location_not_known";
+                                break;
+                            }
+                            else {
+                                res.object_location = response_object_location;
+                                break;
+                            }
+                        }
+                    } // end while loop
+                }
 				break;
 			}
 		}
@@ -362,7 +475,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 	unsigned int n_tries = 0;
 
 	// Maximum waiting time per question
-	const double t_max_question = std::max(9.0, time_out/(2.0*n_tries_max));
+    double t_max_question = 10.0;   // before = std::max(9.0, time_out/(2.0*n_tries_max));
 
 	// Check if the type starts with a vowel
 	std::string vowels = "auioe";
@@ -376,6 +489,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         // Remap type such that it matches the topic name
         type = "sentences";
         starting_txt = "What can I do for you?";
+        t_max_question = 300; // = 5 minutes, in e-gpsr 2013 amigo should handle waiting long time for input.
 
 	} else {
 		std::string art = (start_with_vowel)?"an ":"a ";
@@ -384,7 +498,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 
     // Ask
     amigoSpeak(starting_txt);
-
+    ROS_DEBUG("Max time to wait for answer = %f", t_max_question);
     while (ros::Time::now().toSec() - t_start < time_out && n_tries < n_tries_max) {
 
         // If an answer was heared, verify
@@ -408,7 +522,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
             }
 
             // If answer received, ask for confirmation
-			if (waitForAnswer("yesno", t_max_question)) {
+            if (waitForAnswer("yesno", 10.0)) {
                 setColor(1,0,0); // color red
 				// Check if answer is confirmed
 				if (answer_ == "yes" || answer_ == "y") {
@@ -435,7 +549,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 }
 
                 // Check if the answer is confirmed after the second confirmation question
-				if (waitForAnswer("yesno", t_max_question)) {
+                if (waitForAnswer("yesno", 10.0)) {
                     setColor(1,0,0); // color red
 					// Check if answer is confirmed (second time)
 					if (answer_ == "yes" || answer_ == "y") {
@@ -443,7 +557,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 						break;
 					} else {
 						result = "wrong_answer";
-                        amigoSpeak("I'm sorry, we will try it again. Could you please repeat it?");
+                        amigoSpeak("I'm sorry, we will try it again. Could you please repeat what you want?");
 						++n_tries;
 					}
 				}
@@ -452,7 +566,14 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 				else {
                     setColor(1,0,0); // color red
                     result = "no_answer";
-					amigoSpeak("I did not hear you");
+                    if (type == "sentences") {
+                        amigoSpeak("I'm sorry, I didn't hear a confirmation. Could you please repeat what you want me to do?");
+                    }
+                    else {
+                        std::string art = (start_with_vowel)?"an ":"a ";
+                        starting_txt = "I'm sorry, I didn't hear a confirmation. Could you please give me " + art + type;
+                        amigoSpeak(starting_txt);
+                    }
 					++n_tries;
 				}
 			}
@@ -463,15 +584,18 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 		else {
             setColor(1,0,0); // color red
             result = "no_answer";
-			amigoSpeak("I did not hear you");
-            ROS_INFO("n_tries before = %i", n_tries);
+            amigoSpeak("I did not hear you, I'm sorry.");
+            ROS_DEBUG("n_tries before = %i", n_tries);
             ++n_tries;
-            ROS_INFO("n_tries after = %i", n_tries);
-            ROS_INFO("n_tries_max = %i", n_tries_max);
+            ROS_DEBUG("n_tries now = %i", n_tries);
+            ROS_DEBUG("n_tries_max = %i", n_tries_max);
+            double time_check = ros::Time::now().toSec() - t_start;
+            ROS_DEBUG("rostime: now - t_start = %f", time_check);
+            ROS_DEBUG("time_out = %f", time_out);
 		}
 	}
 
-	return result;
+    return result;
 }
 
 
