@@ -490,7 +490,8 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         type = "sentences";
         starting_txt = "What can I do for you?";
         t_max_question = 300; // = 5 minutes, in e-gpsr 2013 amigo should handle waiting long time for input.
-
+    } else if (type == "bedroom" || type =="livingroom" || type == "kitchen" || type == "lobby") {
+        starting_txt = "Can you give me the exact location?";
 	} else {
 		std::string art = (start_with_vowel)?"an ":"a ";
         starting_txt = "Can you give me " + art + type;
@@ -530,7 +531,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                     break;
 				} else {
 					result = "wrong_answer";
-                    amigoSpeak("I'm sorry, we will try it again. Could you please repeat it?");
+                    amigoSpeak("I understood that it is not correct, we will try it again. Could you please repeat it?");
 					++n_tries;
 				}
 			}
@@ -557,7 +558,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 						break;
 					} else {
 						result = "wrong_answer";
-                        amigoSpeak("I'm sorry, we will try it again. Could you please repeat what you want?");
+                        amigoSpeak("I understood that it is not correct, we will try it again. Could you please repeat what you want?");
 						++n_tries;
 					}
 				}
@@ -603,7 +604,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
  * Function that makes AMIGO speak
  */
 void Interpreter::amigoSpeak(std::string txt) {
-    if(ros::param::has("/text_to_speech"))
+   /** if(ros::param::has("/text_to_speech"))
         {
             ROS_INFO("%s", txt.c_str());
             text_to_speech_philips::amigo_speakup_advanced speak;
@@ -616,10 +617,10 @@ void Interpreter::amigoSpeak(std::string txt) {
             pub_speech_.call(speak);
         }
     else
-        {
+        {*/
         // TODO Should be connected to the text to speech module topic
         ROS_INFO("%s", txt.c_str());
-        }
+        //}
 }
 
 /**
