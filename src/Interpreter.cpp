@@ -93,7 +93,7 @@ void Interpreter::initializeMappings(ros::NodeHandle& nh) {
 	action_category_map_["transport"].push_back("location_category");
 	action_category_map_["get"].push_back("object_category");
 	action_category_map_["find"].push_back("object_category");
-	action_category_map_["point"].push_back("object_category");
+    action_category_map_["point"].push_back("location_category");
 }
 
 void Interpreter::initializeSpeechServicesTopics(ros::NodeHandle& nh) {
