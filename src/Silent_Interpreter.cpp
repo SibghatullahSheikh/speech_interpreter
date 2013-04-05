@@ -42,7 +42,7 @@ Interpreter::Interpreter() : answer_("") {
 	info_service_ = nh.advertiseService("get_info_user", &Interpreter::getInfo, this);
 	action_service_ = nh.advertiseService("get_action_user", &Interpreter::getAction, this);
     continue_service_ = nh.advertiseService("get_continue", &Interpreter::getContinue, this);
-    yesno_service_ = nh.advertiseService("get_yes_no", &Interpreter::getYesNo, this);
+    yes_no_service_ = nh.advertiseService("get_yes_no", &Interpreter::getYesNo, this);
 
     pub_speech_ =  nh.serviceClient<text_to_speech_philips::amigo_speakup_advanced>("/amigo_speakup_advanced");
 
