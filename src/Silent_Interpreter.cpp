@@ -42,6 +42,7 @@ Interpreter::Interpreter() : answer_("") {
 	info_service_ = nh.advertiseService("get_info_user", &Interpreter::getInfo, this);
 	action_service_ = nh.advertiseService("get_action_user", &Interpreter::getAction, this);
     continue_service_ = nh.advertiseService("get_continue", &Interpreter::getContinue, this);
+    yesno_service_ = nh.advertiseService("get_yes_no", &Interpreter::getYesNo, this);
 
     pub_speech_ =  nh.serviceClient<text_to_speech_philips::amigo_speakup_advanced>("/amigo_speakup_advanced");
 
@@ -717,6 +718,66 @@ bool Interpreter::getContinue(speech_interpreter::GetContinue::Request  &req, sp
 
     return true;
 
+}
+
+/**
+ * Service that asks user yes or no
+ */
+bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_interpreter::GetYesNo::Response &res) {
+
+    // Get variables
+    unsigned int n_tries_max = req.n_tries_max;
+    double time_out = req.time_out;
+    const double t_max_question = std::max(time_out, time_out/(2.0*n_tries_max));
+    unsigned int n_tries = 0;
+    unsigned int n_tries_no = 0;
+
+    ROS_INFO("I will try to receive yes no %d tries and time out of %f", n_tries_max, time_out);
+
+    while (n_tries < n_tries_max) {
+        if (waitForAnswer("yesno", t_max_question)) {
+			if (answer_ == "yes" || answer_ == "y") {
+				setColor(1,0,0); // color red
+				amigoSpeak("I heard yes");
+				res.answer = "true";
+				setColor(0,0,1); // color blue
+				return true;
+			}
+			else {
+				if (!(answer_ == "no")) {
+					amigoSpeak("Could you please answer with yes or no?");
+					res.answer = "false";
+                    
+                }
+                else {
+                    amigoSpeak("I heard no, is that correct");
+                    while (n_tries_no < 5) {
+						if (waitForAnswer("yesno", t_max_question)){
+							if (answer_ == "yes" || answer_ == "y") {
+								amigoSpeak("My bad for mishearing");
+								res.answer = "false";
+								return true;
+							}
+							else if (!(answer_=="no")){
+								amigoSpeak("Could you please answer with yes or no?");
+								++n_tries_no;
+							}
+							else{
+								amigoSpeak("Answer the first question again!");
+								res.answer = "false";
+								break;
+							}	
+						}				
+					}
+				}
+				++n_tries;
+				
+			}
+			
+		}
+		setColor(0,0,1); // color blue
+	}
+	return true;
 }
 
 

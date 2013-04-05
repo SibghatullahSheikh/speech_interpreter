@@ -20,6 +20,7 @@
 #include "speech_interpreter/GetInfo.h"
 #include "speech_interpreter/GetAction.h"
 #include "speech_interpreter/GetContinue.h"
+#include "speech_interpreter/GetYesNo.h"
 #include "std_msgs/String.h"
 
 namespace SpeechInterpreter {
@@ -43,6 +44,7 @@ public:
 	bool getInfo(speech_interpreter::GetInfo::Request  &req, speech_interpreter::GetInfo::Response &res);
 	bool getAction(speech_interpreter::GetAction::Request  &req, speech_interpreter::GetAction::Response &res);
     bool getContinue(speech_interpreter::GetContinue::Request  &req, speech_interpreter::GetContinue::Response &res);
+    bool getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_interpreter::GetYesNo::Response &res);
 
 	/**
 	 * Callbacks
@@ -77,6 +79,7 @@ public:
 	ros::ServiceServer info_service_;
 	ros::ServiceServer action_service_;
     ros::ServiceServer continue_service_;
+    ros::ServiceServer yes_no_service_;
 
 	// Knowledge maps
 	std::map<std::string, std::string> action_map_;
