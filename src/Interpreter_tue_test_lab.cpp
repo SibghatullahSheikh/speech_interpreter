@@ -198,12 +198,12 @@ bool Interpreter::getInfo(speech_interpreter::GetInfo::Request  &req, speech_int
 bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech_interpreter::GetAction::Response &res) {
 
 	// Initial response should be empty
-	res.action = "";
+	res.action = "empty";
 	res.start_location = "meeting_point";
-	res.end_location = "";
-	res.object = "";
-    res.object_room = "";
-    res.object_location = "";
+	res.end_location = "empty";
+	res.object = "empty";
+    res.object_room = "empty";
+    res.object_location = "empty";
 
 	// Get the action from the user
 	double time_out_action = req.time_out;
