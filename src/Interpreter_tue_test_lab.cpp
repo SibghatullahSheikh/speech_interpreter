@@ -604,7 +604,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
  * Function that makes AMIGO speak
  */
 void Interpreter::amigoSpeak(std::string txt) {
-   /** if(ros::param::has("/text_to_speech"))
+   if(ros::param::has("/text_to_speech"))
         {
             ROS_INFO("%s", txt.c_str());
             text_to_speech_philips::amigo_speakup_advanced speak;
@@ -617,10 +617,10 @@ void Interpreter::amigoSpeak(std::string txt) {
             pub_speech_.call(speak);
         }
     else
-        {*/
+        {
         // TODO Should be connected to the text to speech module topic
         ROS_INFO("%s", txt.c_str());
-        //}
+        }
 }
 
 /**
