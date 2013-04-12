@@ -255,7 +255,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
         ROS_DEBUG("%s is needed", it->c_str());
 
 		// Check which instance of the object/location is already given
-		std::string response = "";
+		std::string response = "empty";
 		for (std::vector<std::pair<std::string, int> >::const_iterator it_cat = category_map_[(*it)].begin();
 				it_cat != category_map_[(*it)].end(); ++it_cat) {
 
@@ -285,7 +285,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
                 unsigned int n_tries = 0;
                 bool heard_one_answer = false;
                 bool object_room_known = false;
-                std::string response_object_room = "";
+                std::string response_object_room = "empty";
                 if ((*it) == "object_category") {
                     while (ros::Time::now().toSec() - t_start < (time_out_action - (ros::Time::now().toSec() - t_start))) {
 
@@ -339,7 +339,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
                             amigoSpeak(starting_txt);
                             n_tries = 0;
                             bool object_location_known = false;
-                            std::string response_object_location = "";
+                            std::string response_object_location = "empty";
 
                             while (n_tries < 5) {
                                 if (waitForAnswer("yesno", 10.0)) {
@@ -414,7 +414,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
  */
 void Interpreter::speechCallback(std_msgs::String res) {
 
-	if (res.data != "") {
+	if (res.data != "empty") {
 		answer_ = res.data;
 		std::transform(answer_.begin(), answer_.end(), answer_.begin(), ::tolower);
 		ROS_DEBUG("Received response: %s", res.data.c_str());
