@@ -21,6 +21,7 @@ using std::cout;
 #include <std_msgs/ColorRGBA.h>
 #include <amigo_msgs/RGBLightCommand.h>
 
+#include <vector>
 
 ros::ServiceClient pub_speech_;
 //ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
@@ -47,6 +48,7 @@ Interpreter::Interpreter() : answer_("") {
 
     set_rgb_lights_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 100);
 
+    // Initialize explained lights for get_action
     iExplainedLights = false;
 }
 
@@ -215,8 +217,17 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
         // Red: Amigo talks
         // Green: Questioner talks
         setColor(1,0,0); // color red
-        std::string explaing_txt = "If my lights are red during questioning, I will talk and when my lights are green during questioning, you will talk.";
-        amigoSpeak(explaing_txt);
+        //std::string explaining_txt = "Before I ask you what I can do for you, I just want to tell you that if my lights are red during questioning, I will do the word and when my lights are green during questioning, you will talk.";
+        //amigoSpeak(explaining_txt);
+        std::vector<std::string> possible_text;
+        possible_text.push_back("option_1");
+        possible_text.push_back("optionn_2");
+        possible_text.push_back("optionnnn_3");
+        possible_text.push_back("optionnnnnnn_4");
+        std::string sentence;
+        sentence = getSentence(possible_text);
+        amigoSpeak(sentence);
+
         iExplainedLights = true;
     }
 
@@ -302,7 +313,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
                                 setColor(1,0,0); // color red
                                 // Check if answer is confirmed
                                 if (answer_ == "yes" || answer_ == "y") {
-                                    amigoSpeak("Allright then.");
+                                    amigoSpeak("Alright then.");
                                     object_room_known = true;
                                     response_object_room = askUser("room", 5, time_out_action - (ros::Time::now().toSec() - t_start));
                                     if (response_object_room == "no_answer") {
@@ -316,7 +327,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
                                         ++n_tries;
                                     }
                                     else {
-                                        amigoSpeak("Allright, you do not know where it is, I will try to find it myself.");
+                                        amigoSpeak("Alright, you do not know where it is, I will try to find it myself.");
                                         break;
                                     }
                                 }
@@ -346,12 +357,12 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
                                     setColor(1,0,0); // color red
                                     // Check if answer is confirmed
                                     if (answer_ == "yes" || answer_ == "y") {
-                                        amigoSpeak("Allright then.");
+                                        amigoSpeak("Alright then.");
                                         object_location_known = true;
                                         response_object_location = askUser(response_object_room, 5, time_out_action - (ros::Time::now().toSec() - t_start));
                                         if (response_object_location == "no_answer") {
                                             object_location_known = false;
-                                            std::string txt_room = "Allright, you do not know where it is exactly, I will look in the " + response_object_room;
+                                            std::string txt_room = "Alright, you do not know where it is exactly, I will look in the " + response_object_room;
                                             amigoSpeak(txt_room);
                                         }
                                         break;
@@ -362,7 +373,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
                                             ++n_tries;
                                         }
                                         else {
-                                            std::string txt_room = "Allright, you do not know where it is exactly, I will look in the " + response_object_room;
+                                            std::string txt_room = "Alright, you do not know where it is exactly, I will look in the " + response_object_room;
                                             amigoSpeak(txt_room);
                                             break;
                                         }
@@ -515,7 +526,13 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 
                 // TODO: in ROSINFO ", is that correct?" is shown at the beginning of ROS_INFO. Amigo still says it the wright way.
                 amigoSpeak("I heard " + result2);
-                amigoSpeak("Is that correct?");
+                std::vector<std::string> possible_text;
+                possible_text.push_back("Is that correct?");
+                possible_text.push_back("Am I right?");
+                possible_text.push_back("Does that sound like music in your ears?");
+                std::string sentence;
+                sentence = getSentence(possible_text);
+                amigoSpeak(sentence);
             }
             else {
                 amigoSpeak("I heard " + result);
@@ -527,11 +544,25 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 setColor(1,0,0); // color red
 				// Check if answer is confirmed
 				if (answer_ == "yes" || answer_ == "y") {
-                    amigoSpeak("Allright then.");
+                    std::vector<std::string> possible_text;
+                    possible_text.push_back("Alright then.");
+                    possible_text.push_back("Oke");
+                    possible_text.push_back("Very well");
+                    possible_text.push_back("Fine");
+                    possible_text.push_back("All right");
+                    possible_text.push_back("Okay");
+                    std::string sentence;
+                    sentence = getSentence(possible_text);
+                    amigoSpeak(sentence);
                     break;
 				} else {
 					result = "wrong_answer";
-                    amigoSpeak("I understood that it is not correct, we will try it again. Could you please repeat it?");
+                    std::vector<std::string> possible_text;
+                    possible_text.push_back("I understood that it is not correct, we will try it again. Could you please repeat it?");
+                    possible_text.push_back("I misunderstood, I'm sorry, could you please repeat it?");
+                    std::string sentence;
+                    sentence = getSentence(possible_text);
+                    amigoSpeak(sentence);
 					++n_tries;
 				}
 			}
@@ -554,7 +585,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                     setColor(1,0,0); // color red
 					// Check if answer is confirmed (second time)
 					if (answer_ == "yes" || answer_ == "y") {
-                        amigoSpeak("Allright then.");
+                        amigoSpeak("Alright then.");
 						break;
 					} else {
 						result = "wrong_answer";
@@ -734,6 +765,20 @@ bool Interpreter::getContinue(speech_interpreter::GetContinue::Request  &req, sp
 
     return true;
 
+}
+
+std::string Interpreter::getSentence(std::vector<std::string> possible_text) {
+
+    int max = possible_text.size();
+    //ROS_INFO("size possible_sentences =  %i", max);
+    int output;
+    output = (max) * ((double)rand() / (double)RAND_MAX);
+
+    std::string sentence;
+    sentence = possible_text[output-1];
+    ROS_INFO("size sentence =  %s", sentence.c_str());
+
+    return sentence;
 }
 
 
