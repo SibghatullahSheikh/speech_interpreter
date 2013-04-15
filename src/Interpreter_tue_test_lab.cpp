@@ -217,17 +217,9 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
         // Red: Amigo talks
         // Green: Questioner talks
         setColor(1,0,0); // color red
-        //std::string explaining_txt = "Before I ask you what I can do for you, I just want to tell you that if my lights are red during questioning, I will do the word and when my lights are green during questioning, you will talk.";
-        //amigoSpeak(explaining_txt);
-        std::vector<std::string> possible_text;
-        possible_text.push_back("option_1");
-        possible_text.push_back("optionn_2");
-        possible_text.push_back("optionnnn_3");
-        possible_text.push_back("optionnnnnnn_4");
-        std::string sentence;
-        sentence = getSentence(possible_text);
-        amigoSpeak(sentence);
-
+        std::string explaining_txt = "Before I ask you what I can do for you, I just want to tell you that if my lights are red during questioning, I will do the word and when my lights are green during questioning, you can talk.";
+        amigoSpeak(explaining_txt);
+        
         iExplainedLights = true;
     }
 
@@ -278,7 +270,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 
 					// TODO Now fixed maximum number of attempts, change?
                     ROS_DEBUG("%s has %d possible values, need to ask user for more information", it_cat->first.c_str(), it_cat->second);
-					amigoSpeak("I am sorry, but I need more information. Can you be more specific?");
+					amigoSpeak("I am sorry, but I need more information."); //" Can you be more specific?");
                     response = askUser(it_cat->first, 5, time_out_action - (ros::Time::now().toSec() - t_start));
 
 				} else {
@@ -298,104 +290,127 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
                 bool object_room_known = false;
                 std::string response_object_room = "empty";
                 if ((*it) == "object_category") {
-                    while (ros::Time::now().toSec() - t_start < (time_out_action - (ros::Time::now().toSec() - t_start))) {
+                	if (response == "no_answer") {
+                		res.object_room = "room_not_known";
+                        res.object_location = "location_not_known";
+                        amigoSpeak("I did not receive an object, we should start all over.");
+                   	}
+                	else {
+	                    while (ros::Time::now().toSec() - t_start < (time_out_action - (ros::Time::now().toSec() - t_start))) {
 
-                        // Check if the response starts with a vowel
-                        std::string vowels = "auioe";
-                        bool start_with_vowel = (vowels.find(response[0])< vowels.length());
+	                        // Check if the response starts with a vowel
+	                        std::string vowels = "auioe";
+	                        bool start_with_vowel = (vowels.find(response[0])< vowels.length());
 
-                        std::string art = (start_with_vowel)?"an ":"a ";
-                        std::string starting_txt = "Do you know in which room I can find " + art + response;
-                        amigoSpeak(starting_txt);
+	                        std::string art = (start_with_vowel)?"an ":"a ";
+	                        std::string starting_txt = "Do you know in which room I can find " + art + response;
+	                        amigoSpeak(starting_txt);
 
-                        while (n_tries < 5) {
-                            if (waitForAnswer("yesno", 10.0)) {
-                                setColor(1,0,0); // color red
-                                // Check if answer is confirmed
-                                if (answer_ == "yes" || answer_ == "y") {
-                                    amigoSpeak("Alright then.");
-                                    object_room_known = true;
-                                    response_object_room = askUser("room", 5, time_out_action - (ros::Time::now().toSec() - t_start));
-                                    if (response_object_room == "no_answer") {
-                                        object_room_known = false;
-                                    }
-                                    break;
-                                } else {
-                                    if (!heard_one_answer && !(answer_ == "no")) {
-                                        amigoSpeak("Could you please answer with yes or no?");
-                                        heard_one_answer = true;
-                                        ++n_tries;
-                                    }
-                                    else {
-                                        amigoSpeak("Alright, you do not know where it is, I will try to find it myself.");
-                                        break;
-                                    }
-                                }
-                            }
-                            else {
-                                amigoSpeak("I did not hear you, could you repeat your answer");
-                                ++n_tries;
-                            }
-                        }
+	                        while (n_tries < 5) {
+	                            if (waitForAnswer("yesno", 10.0)) {
+	                                setColor(1,0,0); // color red
+	                                // Check if answer is confirmed
+	                                if (answer_ == "yes" || answer_ == "y") {
+	                                    std::vector<std::string> possible_text;
+					                    possible_text.push_back("Alright then");
+					                    possible_text.push_back("Very well!");
+					                    possible_text.push_back("Fine!");
+					                    possible_text.push_back("All right!");
+					                    possible_text.push_back("Okay!");
+					                    std::string sentence;
+					                    sentence = getSentence(possible_text);
+					                    amigoSpeak(sentence);
+	                                    object_room_known = true;
+	                                    response_object_room = askUser("room", 5, time_out_action - (ros::Time::now().toSec() - t_start));
+	                                    if (response_object_room == "no_answer") {
+	                                        object_room_known = false;
+	                                    }
+	                                    break;
+	                                } else {
+	                                    if (!heard_one_answer && !(answer_ == "no")) {
+	                                        amigoSpeak("Could you please answer with yes or no?");
+	                                        heard_one_answer = true;
+	                                        ++n_tries;
+	                                    }
+	                                    else {
+	                                        amigoSpeak("Alright, you do not know where it is, I will try to find it myself.");
+	                                        break;
+	                                    }
+	                                }
+	                            }
+	                            else {
+	                                amigoSpeak("I did not hear you, could you repeat your answer");
+	                                ++n_tries;
+	                            }
+	                        }
 
-                        // If room is not known, room and exact locations will be unknown. Else continue asking specific location
-                        if (!object_room_known) {
-                            res.object_room = "room_not_known";
-                            res.object_location = "location_not_known";
-                            break;
-                        }
-                        else {
-                            res.object_room = response_object_room;
-                            std::string starting_txt = "Since you know the room, do you also know the specific location to find " + art + response;
-                            amigoSpeak(starting_txt);
-                            n_tries = 0;
-                            bool object_location_known = false;
-                            std::string response_object_location = "empty";
+	                        // If room is not known, room and exact locations will be unknown. Else continue asking specific location
+	                        if (!object_room_known) {
+	                            res.object_room = "room_not_known";
+	                            res.object_location = "location_not_known";
+	                            break;
+	                        }
+	                        else {
+	                            res.object_room = response_object_room;
+	                            std::string starting_txt = "Since you know which room, do you also know the specific location to find " + art + response;
+	                            amigoSpeak(starting_txt);
+	                            n_tries = 0;
+	                            bool object_location_known = false;
+	                            std::string response_object_location = "empty";
 
-                            while (n_tries < 5) {
-                                if (waitForAnswer("yesno", 10.0)) {
-                                    setColor(1,0,0); // color red
-                                    // Check if answer is confirmed
-                                    if (answer_ == "yes" || answer_ == "y") {
-                                        amigoSpeak("Alright then.");
-                                        object_location_known = true;
-                                        response_object_location = askUser(response_object_room, 5, time_out_action - (ros::Time::now().toSec() - t_start));
-                                        if (response_object_location == "no_answer") {
-                                            object_location_known = false;
-                                            std::string txt_room = "Alright, you do not know where it is exactly, I will look in the " + response_object_room;
-                                            amigoSpeak(txt_room);
-                                        }
-                                        break;
-                                    } else {
-                                        if (!heard_one_answer && !(answer_ == "no")) {
-                                            amigoSpeak("Could you please answer with yes or no?");
-                                            heard_one_answer = true;
-                                            ++n_tries;
-                                        }
-                                        else {
-                                            std::string txt_room = "Alright, you do not know where it is exactly, I will look in the " + response_object_room;
-                                            amigoSpeak(txt_room);
-                                            break;
-                                        }
-                                    }
-                                }
-                                else {
-                                    amigoSpeak("I did not hear you, could you repeat your answer");
-                                    ++n_tries;
-                                }
-                            }
+	                            while (n_tries < 5) {
+	                                if (waitForAnswer("yesno", 10.0)) {
+	                                    setColor(1,0,0); // color red
+	                                    // Check if answer is confirmed
+	                                    if (answer_ == "yes" || answer_ == "y") {
+	                                        std::vector<std::string> possible_text;
+						                    possible_text.push_back("Alright then");
+						                    possible_text.push_back("Very well!");
+						                    possible_text.push_back("Fine!");
+						                    possible_text.push_back("All right!");
+						                    possible_text.push_back("Okay!");
+						                    std::string sentence;
+						                    sentence = getSentence(possible_text);
+						                    amigoSpeak(sentence);
+	                                        object_location_known = true;
+	                                        response_object_location = askUser(response_object_room, 5, time_out_action - (ros::Time::now().toSec() - t_start));
+	                                        if (response_object_location == "no_answer") {
+	                                            object_location_known = false;
+	                                            std::string txt_room = "Alright, you do not know where it is exactly, I will look in the " + response_object_room;
+	                                            amigoSpeak(txt_room);
+	                                        }
+	                                        break;
+	                                    } else {
+	                                        if (!heard_one_answer && !(answer_ == "no")) {
+	                                            amigoSpeak("Could you please answer with yes or no?");
+	                                            heard_one_answer = true;
+	                                            ++n_tries;
+	                                        }
+	                                        else {
+	                                            std::string txt_room = "Alright, you do not know where it is exactly, I will look in the " + response_object_room;
+	                                            amigoSpeak(txt_room);
+	                                            break;
+	                                        }
+	                                    }
+	                                }
+	                                else {
+	                                    amigoSpeak("I did not hear you, could you repeat your answer");
+	                                    ++n_tries;
+	                                }
+	                            }
 
-                            // Check if location object is known.
-                            if (!object_location_known) {
-                                res.object_location = "location_not_known";
-                                break;
-                            }
-                            else {
-                                res.object_location = response_object_location;
-                                break;
-                            }
-                        }
-                    } // end while loop
+	                            // Check if location object is known.
+	                            if (!object_location_known) {
+	                                res.object_location = "location_not_known";
+	                                break;
+	                            }
+	                            else {
+	                                res.object_location = response_object_location;
+	                                break;
+	                            }
+	                        }
+	                    } // end while loop
+	                }
                 }
 				break;
 			}
@@ -505,8 +520,8 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         starting_txt = "Can you give me the exact location?";
 	} else {
 		std::string art = (start_with_vowel)?"an ":"a ";
-        starting_txt = "Can you give me " + art + type;
-	}
+        starting_txt = "Can you specify which " + type + " you mean?";
+    }    
 
     // Ask
     amigoSpeak(starting_txt);
@@ -529,6 +544,8 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 std::vector<std::string> possible_text;
                 possible_text.push_back("Is that correct?");
                 possible_text.push_back("Am I right?");
+                possible_text.push_back("Is that okay?");
+                possible_text.push_back("Is that alright?");
                 possible_text.push_back("Does that sound like music in your ears?");
                 std::string sentence;
                 sentence = getSentence(possible_text);
@@ -536,7 +553,15 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
             }
             else {
                 amigoSpeak("I heard " + result);
-                amigoSpeak("Is that correct?");
+                std::vector<std::string> possible_text;
+                possible_text.push_back("Is that correct?");
+                possible_text.push_back("Am I right?");
+                possible_text.push_back("Is that okay?");
+                possible_text.push_back("Is that alright?");
+                possible_text.push_back("Does that sound like music in your ears?");
+                std::string sentence;
+                sentence = getSentence(possible_text);
+                amigoSpeak(sentence);
             }
 
             // If answer received, ask for confirmation
@@ -545,12 +570,11 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 				// Check if answer is confirmed
 				if (answer_ == "yes" || answer_ == "y") {
                     std::vector<std::string> possible_text;
-                    possible_text.push_back("Alright then.");
-                    possible_text.push_back("Oke");
-                    possible_text.push_back("Very well");
-                    possible_text.push_back("Fine");
-                    possible_text.push_back("All right");
-                    possible_text.push_back("Okay");
+                    possible_text.push_back("Alright then");
+                    possible_text.push_back("Very well!");
+                    possible_text.push_back("Fine!");
+                    possible_text.push_back("All right!");
+                    possible_text.push_back("Okay!");
                     std::string sentence;
                     sentence = getSentence(possible_text);
                     amigoSpeak(sentence);
@@ -558,8 +582,11 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 				} else {
 					result = "wrong_answer";
                     std::vector<std::string> possible_text;
-                    possible_text.push_back("I understood that it is not correct, we will try it again. Could you please repeat it?");
-                    possible_text.push_back("I misunderstood, I'm sorry, could you please repeat it?");
+                    possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
+                    possible_text.push_back("Apparently I mis understood, I'm sorry, could you please repeat it");
+                    possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
+                    possible_text.push_back("I was wrong, I'm sorry, could you please repeat it");
+                    possible_text.push_back("Maybe there is something wrong with my ears, I'm sorry, could you please repeat it");
                     std::string sentence;
                     sentence = getSentence(possible_text);
                     amigoSpeak(sentence);
@@ -585,11 +612,27 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                     setColor(1,0,0); // color red
 					// Check if answer is confirmed (second time)
 					if (answer_ == "yes" || answer_ == "y") {
-                        amigoSpeak("Alright then.");
+	                    std::vector<std::string> possible_text;
+	                    possible_text.push_back("Alright then");
+	                    possible_text.push_back("Very well!");
+	                    possible_text.push_back("Fine!");
+	                    possible_text.push_back("All right!");
+	                    possible_text.push_back("Okay!");
+	                    std::string sentence;
+	                    sentence = getSentence(possible_text);
+	                    amigoSpeak(sentence);
 						break;
 					} else {
 						result = "wrong_answer";
-                        amigoSpeak("I understood that it is not correct, we will try it again. Could you please repeat what you want?");
+	                    std::vector<std::string> possible_text;
+	                    possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
+	                    possible_text.push_back("Apparently I mis understood, I'm sorry, could you please repeat it");
+	                    possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
+	                    possible_text.push_back("I was wrong, I'm sorry, could you please repeat it");
+	                    possible_text.push_back("Maybe there is something wrong with my ears, I'm sorry, could you please repeat it");
+	                    std::string sentence;
+	                    sentence = getSentence(possible_text);
+	                    amigoSpeak(sentence);
 						++n_tries;
 					}
 				}
@@ -603,7 +646,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                     }
                     else {
                         std::string art = (start_with_vowel)?"an ":"a ";
-                        starting_txt = "I'm sorry, I didn't hear a confirmation. Could you please give me " + art + type;
+                        starting_txt = "I'm sorry, I didn't hear a confirmation. Could you please specify which " + type + " you need?";
                         amigoSpeak(starting_txt);
                     }
 					++n_tries;
@@ -776,7 +819,7 @@ std::string Interpreter::getSentence(std::vector<std::string> possible_text) {
 
     std::string sentence;
     sentence = possible_text[output-1];
-    ROS_INFO("size sentence =  %s", sentence.c_str());
+    //ROS_INFO("size sentence =  %s", sentence.c_str());
 
     return sentence;
 }
