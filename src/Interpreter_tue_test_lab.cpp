@@ -270,7 +270,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 
 					// TODO Now fixed maximum number of attempts, change?
                     ROS_DEBUG("%s has %d possible values, need to ask user for more information", it_cat->first.c_str(), it_cat->second);
-					amigoSpeak("I am sorry, but I need more information."); //" Can you be more specific?");
+					//amigoSpeak("I am sorry, but I need more information."); //" Can you be more specific?");
                     response = askUser(it_cat->first, 5, time_out_action - (ros::Time::now().toSec() - t_start));
 
 				} else {
@@ -303,7 +303,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	                        bool start_with_vowel = (vowels.find(response[0])< vowels.length());
 
 	                        std::string art = (start_with_vowel)?"an ":"a ";
-	                        std::string starting_txt = "Do you know in which room I can find " + art + response;
+	                        std::string starting_txt = "Are you aware of the room in which I can find " + art + response;
 	                        amigoSpeak(starting_txt);
 
 	                        while (n_tries < 5) {
@@ -328,12 +328,23 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	                                    break;
 	                                } else {
 	                                    if (!heard_one_answer && !(answer_ == "no")) {
-	                                        amigoSpeak("Could you please answer with yes or no?");
+	                                        std::vector<std::string> possible_text;
+						                    possible_text.push_back("Could you please answer with yes or no?");
+						                    possible_text.push_back("Would you answer with yes or no?");
+						                    std::string sentence;
+						                    sentence = getSentence(possible_text);
+						                    amigoSpeak(sentence);
 	                                        heard_one_answer = true;
 	                                        ++n_tries;
 	                                    }
 	                                    else {
-	                                        amigoSpeak("Alright, you do not know where it is, I will try to find it myself.");
+	                                        std::vector<std::string> possible_text;
+						                    possible_text.push_back("Alright, you do not know where it is, I will try to find it myself.");
+						                    possible_text.push_back("No problem, I will try to find it myself.");
+						                    possible_text.push_back("You said that you don't know where it is, therefore I will try to find it myself.");
+						                    std::string sentence;
+						                    sentence = getSentence(possible_text);
+						                    amigoSpeak(sentence);
 	                                        break;
 	                                    }
 	                                }
@@ -352,7 +363,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	                        }
 	                        else {
 	                            res.object_room = response_object_room;
-	                            std::string starting_txt = "Since you know which room, do you also know the specific location to find " + art + response;
+	                            std::string starting_txt = "Since you know which room, are you also aware of the specific location to find " + art + response;
 	                            amigoSpeak(starting_txt);
 	                            n_tries = 0;
 	                            bool object_location_known = false;
@@ -382,13 +393,23 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	                                        break;
 	                                    } else {
 	                                        if (!heard_one_answer && !(answer_ == "no")) {
-	                                            amigoSpeak("Could you please answer with yes or no?");
+		                                        std::vector<std::string> possible_text;
+							                    possible_text.push_back("Could you please answer with yes or no?");
+							                    possible_text.push_back("Would you answer with yes or no?");
+							                    std::string sentence;
+							                    sentence = getSentence(possible_text);
+							                    amigoSpeak(sentence);
 	                                            heard_one_answer = true;
 	                                            ++n_tries;
 	                                        }
 	                                        else {
-	                                            std::string txt_room = "Alright, you do not know where it is exactly, I will look in the " + response_object_room;
-	                                            amigoSpeak(txt_room);
+	                                            std::vector<std::string> possible_text;
+							                    possible_text.push_back("Alright, you do not know where it is exactly. I will look in the " + response_object_room);
+							                    possible_text.push_back("No problem, I will try to find it myself. I will look in the " + response_object_room);
+							                    possible_text.push_back("You said that you don't know where it is, therefore I will look in the " + response_object_room);
+							                    std::string sentence;
+							                    sentence = getSentence(possible_text);
+							                    amigoSpeak(sentence);
 	                                            break;
 	                                        }
 	                                    }
@@ -546,7 +567,6 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 possible_text.push_back("Am I right?");
                 possible_text.push_back("Is that okay?");
                 possible_text.push_back("Is that alright?");
-                possible_text.push_back("Does that sound like music in your ears?");
                 std::string sentence;
                 sentence = getSentence(possible_text);
                 amigoSpeak(sentence);
@@ -558,7 +578,6 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 possible_text.push_back("Am I right?");
                 possible_text.push_back("Is that okay?");
                 possible_text.push_back("Is that alright?");
-                possible_text.push_back("Does that sound like music in your ears?");
                 std::string sentence;
                 sentence = getSentence(possible_text);
                 amigoSpeak(sentence);
@@ -813,13 +832,13 @@ bool Interpreter::getContinue(speech_interpreter::GetContinue::Request  &req, sp
 std::string Interpreter::getSentence(std::vector<std::string> possible_text) {
 
     int max = possible_text.size();
-    //ROS_INFO("size possible_sentences =  %i", max);
+    ROS_INFO("max =  %i", max);
     int output;
     output = (max) * ((double)rand() / (double)RAND_MAX);
-
+   	ROS_INFO("output =  %i", output);
     std::string sentence;
-    sentence = possible_text[output-1];
-    //ROS_INFO("size sentence =  %s", sentence.c_str());
+    sentence = possible_text[output];
+    ROS_INFO("chosen sentence =  %s", sentence.c_str());
 
     return sentence;
 }
