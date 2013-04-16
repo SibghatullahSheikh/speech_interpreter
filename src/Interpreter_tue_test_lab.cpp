@@ -202,7 +202,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	// Initial response should be empty
 	res.action = "empty";
 	res.start_location = "meeting_point";
-	res.end_location = "empty";
+	res.end_location = "meeting_point";
 	res.object = "empty";
     res.object_room = "empty";
     res.object_location = "empty";
@@ -446,11 +446,6 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 
 	}
 
-	// If not asked for a location, end location is meeting_point (in case of get me, give me)
-	if (res.end_location.empty()) {
-		res.end_location = "meeting_point";
-		// TODO Note point action does not need an end location, in that case start location can be ignored
-	}
     setColor(0,0,1); // color blue
 	return true;
 }
