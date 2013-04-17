@@ -84,13 +84,14 @@ void Interpreter::initializeMappings(ros::NodeHandle& nh) {
 	category_map_["location_category"].push_back(std::make_pair("table", 4));
 	category_map_["location_category"].push_back(std::make_pair("shelf", 4));
 	category_map_["location_category"].push_back(std::make_pair("appliance", 3));
-	category_map_["location_category"].push_back(std::make_pair("bin", 1));
+    category_map_["location_category"].push_back(std::make_pair("bin", 1));
 
     category_map_["room_category"].push_back(std::make_pair("room", 4));
     category_map_["room_location_category"].push_back(std::make_pair("bedroom", 3));
     category_map_["room_location_category"].push_back(std::make_pair("livingroom", 7));
     category_map_["room_location_category"].push_back(std::make_pair("kitchen", 5));
     category_map_["room_location_category"].push_back(std::make_pair("lobby", 3));
+
 
 	// Action category map
 	action_category_map_["transport"].push_back("object_category");
@@ -720,7 +721,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                     setColor(1,0,0); // color red
 					// Check if answer is confirmed (second time)
 					if (answer_ == "yes" || answer_ == "y") {
-	                    std::vector<std::string> possible_text;
+                        std::vector<std::string> possible_text;
 	                    possible_text.push_back("Alright then");
 	                    possible_text.push_back("Very well!");
 	                    possible_text.push_back("Fine!");
@@ -1061,9 +1062,8 @@ bool Interpreter::getCleanup(speech_interpreter::GetCleanup::Request  &req, spee
         iExplainedLights = true;
     }
 
-    // Get action description
-    int max_num_tries_action = 5;
-    std::string cleanuproom = askUser("cleanup", max_num_tries_action, time_out);
+    // Get the room
+    std::string cleanuproom = askUser("cleanup", n_tries_max, time_out);
     ROS_DEBUG("Received action %s, %f seconds left for refining action", cleanuproom.c_str(), ros::Time::now().toSec() - t_start);
 
     if (cleanuproom == "no_answer" || cleanuproom == "wrong_answer") {

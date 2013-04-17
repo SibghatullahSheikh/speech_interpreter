@@ -1061,9 +1061,8 @@ bool Interpreter::getCleanup(speech_interpreter::GetCleanup::Request  &req, spee
         iExplainedLights = true;
     }
 
-    // Get action description
-    int max_num_tries_action = 5;
-    std::string cleanuproom = askUser("cleanup", max_num_tries_action, time_out);
+    // Get the room
+    std::string cleanuproom = askUser("cleanup", n_tries_max, time_out);
     ROS_DEBUG("Received action %s, %f seconds left for refining action", cleanuproom.c_str(), ros::Time::now().toSec() - t_start);
 
     if (cleanuproom == "no_answer" || cleanuproom == "wrong_answer") {
