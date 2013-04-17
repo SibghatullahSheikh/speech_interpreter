@@ -43,6 +43,7 @@ Interpreter::Interpreter() : answer_("") {
 	info_service_ = nh.advertiseService("get_info_user", &Interpreter::getInfo, this);
 	action_service_ = nh.advertiseService("get_action_user", &Interpreter::getAction, this);
     continue_service_ = nh.advertiseService("get_continue", &Interpreter::getContinue, this);
+    yes_no_service_ = nh.advertiseService("get_yes_no", &Interpreter::getYesNo, this);
 
     pub_speech_ =  nh.serviceClient<text_to_speech_philips::amigo_speakup_advanced>("/amigo_speakup_advanced");
 
@@ -127,6 +128,7 @@ void Interpreter::initializeSpeechServicesTopics(ros::NodeHandle& nh) {
 	fixed_list.push_back("name");      // TODO this should be loaded from yaml?
 	fixed_list.push_back("sentences"); // TODO this should be loaded from yaml?
     fixed_list.push_back("continue"); // TODO this should be loaded from yaml?
+
 	for (std::vector<std::string>::const_iterator it = fixed_list.begin(); it != fixed_list.end(); ++it) {
 		//ROS_INFO("Creating start and stop services for %s", it->c_str());
 		category_srv_clients_map_[(*it)] =
@@ -250,6 +252,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
         amigoSpeak("I know everything I need to know, I will go to an exit now");
 		res.end_location = "exit";
 		res.action = "leave";
+        setColor(0,0,1); // color blue
 		return true;
 	}
 
@@ -270,7 +273,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 
 					// TODO Now fixed maximum number of attempts, change?
                     ROS_DEBUG("%s has %d possible values, need to ask user for more information", it_cat->first.c_str(), it_cat->second);
-					//amigoSpeak("I am sorry, but I need more information."); //" Can you be more specific?");
+                    //amigoSpeak("I am sorry, but I need more information."); //" Can you be more specific?"); REMOVED THIS SENTENCE, DOES NOT FEEL NATURAL
                     response = askUser(it_cat->first, 5, time_out_action - (ros::Time::now().toSec() - t_start));
 
 				} else {
@@ -278,7 +281,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 					amigoSpeak("I only know one " + it_cat->first);
 					if (it_cat->first == "bathroomstuff") {
 						response = "cif";
-					}
+                    }
 					else {
 						response = it_cat->first;
 					}
@@ -293,8 +296,28 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
                 	if (response == "no_answer") {
                 		res.object_room = "room_not_known";
                         res.object_location = "location_not_known";
-                        amigoSpeak("I did not receive an object, we should start all over.");
+
+                        std::vector<std::string> possible_text;
+                        possible_text.push_back("We should start all over.");
+                        possible_text.push_back("Let's start at the beginning");
+                        std::string sentence;
+                        sentence = getSentence(possible_text);
+                        amigoSpeak(sentence);
+                        ++n_tries;
+
                    	}
+                    else if (response == "wrong_answer") {
+                        res.object_room = "room_not_known";
+                        res.object_location = "location_not_known";
+
+                        std::vector<std::string> possible_text;
+                        possible_text.push_back("We should start all over.");
+                        possible_text.push_back("Let's start at the beginning");
+                        std::string sentence;
+                        sentence = getSentence(possible_text);
+                        amigoSpeak(sentence);
+                        ++n_tries;
+                    }
                 	else {
 	                    while (ros::Time::now().toSec() - t_start < (time_out_action - (ros::Time::now().toSec() - t_start))) {
 
@@ -324,7 +347,12 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	                                    response_object_room = askUser("room", 5, time_out_action - (ros::Time::now().toSec() - t_start));
 	                                    if (response_object_room == "no_answer") {
 	                                        object_room_known = false;
+                                            amigoSpeak("I will go look for myself, no problem");
 	                                    }
+                                        else if (response_object_room == "wrong_answer") {
+                                            object_room_known = false;
+                                            amigoSpeak("I will go look for myself, no problem");
+                                        }
 	                                    break;
 	                                } else {
 	                                    if (!heard_one_answer && !(answer_ == "no")) {
@@ -350,8 +378,20 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	                                }
 	                            }
 	                            else {
-	                                amigoSpeak("I did not hear you, could you repeat your answer");
-	                                ++n_tries;
+                                    std::vector<std::string> possible_text;
+                                    if ((n_tries + 1) == 5) {
+                                        possible_text.push_back("I did not hear you for a longer time.");
+                                        possible_text.push_back("I'm sorry, I did not hear from you for a longer time.");
+                                    }
+                                    else {
+                                        possible_text.push_back("I did not hear you, I'm sorry. Please say something.");
+                                        possible_text.push_back("Did you say something? In any case, I was not able to hear you.");
+                                        possible_text.push_back("I did not hear you, maybe you should get a little closer to me.");
+                                    }
+                                    std::string sentence;
+                                    sentence = getSentence(possible_text);
+                                    amigoSpeak(sentence);
+                                    ++n_tries;
 	                            }
 	                        }
 
@@ -387,11 +427,17 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	                                        response_object_location = askUser(response_object_room, 5, time_out_action - (ros::Time::now().toSec() - t_start));
 	                                        if (response_object_location == "no_answer") {
 	                                            object_location_known = false;
-	                                            std::string txt_room = "Alright, you do not know where it is exactly, I will look in the " + response_object_room;
+                                                std::string txt_room = "I will go look for myself in the " + response_object_room + ". No problem!";
 	                                            amigoSpeak(txt_room);
-	                                        }
+                                            }
+                                            else if (response_object_location == "wrong_answer") {
+                                                object_location_known = false;
+                                                std::string txt_room = "I will go look for myself in the " + response_object_room + ". No problem!";
+                                                amigoSpeak(txt_room);
+                                            }
 	                                        break;
-	                                    } else {
+                                        }
+                                        else {
 	                                        if (!heard_one_answer && !(answer_ == "no")) {
 		                                        std::vector<std::string> possible_text;
 							                    possible_text.push_back("Could you please answer with yes or no?");
@@ -414,9 +460,21 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	                                        }
 	                                    }
 	                                }
-	                                else {
-	                                    amigoSpeak("I did not hear you, could you repeat your answer");
-	                                    ++n_tries;
+                                    else {
+                                        std::vector<std::string> possible_text;
+                                        if ((n_tries + 1) == 5) {
+                                            possible_text.push_back("I did not hear you for a longer time.");
+                                            possible_text.push_back("I'm sorry, I did not hear from you for a longer time.");
+                                        }
+                                        else {
+                                            possible_text.push_back("I did not hear you, I'm sorry. Please say something.");
+                                            possible_text.push_back("Did you say something? In any case, I was not able to hear you.");
+                                            possible_text.push_back("I did not hear you, maybe you should get a little closer to me.");
+                                        }
+                                        std::string sentence;
+                                        sentence = getSentence(possible_text);
+                                        amigoSpeak(sentence);
+                                        ++n_tries;
 	                                }
 	                            }
 
@@ -485,11 +543,10 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
         setColor(0,1,0); // color green
     }
 
-
 	answer_.clear();
 	double start_time = ros::Time::now().toSec();
 	ros::Rate r(10);
-	while (answer_.empty()) {
+    while (answer_.empty() || (answer_== " ")|| (answer_== "  ") || (answer_== "   ")) {
 		if (ros::Time::now().toSec() - start_time > t_max) {
 			ROS_WARN("Timeout: No input over speech topic %s for %f seconds", category.c_str(), t_max);
 			break;
@@ -498,7 +555,14 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
 		r.sleep();
 	}
 
-	// Turn off speech recognition for requested category
+    // If input is more than one word -> only pick the first word:
+    if (answer_.size() > 2) {
+        unsigned found=answer_.find(" ");
+        std::string part = answer_.substr(0,found);
+        answer_= part;
+    }
+
+    // Turn off speech recognition for requested category
 	if (!category_srv_clients_map_[category].second.call(srv)) {
 		ROS_WARN("Unable to turn off speech recognition for %s", category.c_str());
 	} ROS_DEBUG("Switched off speech recognition for: %s", category.c_str());
@@ -555,7 +619,6 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 line_number = getLineNumber(answer_);
                 result2 = getTextWithSpaces(line_number);
 
-                // TODO: in ROSINFO ", is that correct?" is shown at the beginning of ROS_INFO. Amigo still says it the wright way.
                 amigoSpeak("I heard " + result2);
                 std::vector<std::string> possible_text;
                 possible_text.push_back("Is that correct?");
@@ -593,18 +656,24 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                     sentence = getSentence(possible_text);
                     amigoSpeak(sentence);
                     break;
-				} else {
-					result = "wrong_answer";
+                } else {
+                    result = "wrong_answer";
                     std::vector<std::string> possible_text;
-                    possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
-                    possible_text.push_back("Apparently I mis understood, I'm sorry, could you please repeat it");
-                    possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
-                    possible_text.push_back("I was wrong, I'm sorry, could you please repeat it");
-                    possible_text.push_back("Maybe there is something wrong with my ears, I'm sorry, could you please repeat it");
+                    if ((n_tries + 1) == n_tries_max) {
+                        possible_text.push_back("I was not able to understand what you were saying for a longer time, I'm sorry.");
+                        possible_text.push_back("I'm sorry, I was not able to understand what you were saying for a longer time.");
+                    }
+                    else {
+                        possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
+                        possible_text.push_back("Apparently I mis understood, I'm sorry, could you please repeat it");
+                        possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
+                        possible_text.push_back("I was wrong, I'm sorry, could you please repeat it");
+                        possible_text.push_back("Maybe there is something wrong with my ears, I'm sorry, could you please repeat it");
+                    }
                     std::string sentence;
                     sentence = getSentence(possible_text);
                     amigoSpeak(sentence);
-					++n_tries;
+                    ++n_tries;
 				}
 			}
 
@@ -612,13 +681,20 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 			else {
                 setColor(1,0,0); // color red
                 if ( type == "sentences") {
-                    // TODO: in ROSINFO ", is that correct?" is shown at the beginning of ROS_INFO. Amigo still says it the wright way.
-                    txt = "I did not hear you, did you say " + result2;
-                    amigoSpeak(txt);
+                    std::vector<std::string> possible_text;
+                    possible_text.push_back("I did not hear you, did you say "+ result2);
+                    possible_text.push_back("Did you say "+ result2 + ". Could you confirm that?");
+                    std::string sentence;
+                    sentence = getSentence(possible_text);
+                    amigoSpeak(sentence);
                 }
                 else {
-                    txt = "I did not hear you, did you say " + result + "?";
-                    amigoSpeak(txt);
+                    std::vector<std::string> possible_text;
+                    possible_text.push_back("I did not hear you, did you say "+ result);
+                    possible_text.push_back("Did you say "+ result + ". Could you confirm that?");
+                    std::string sentence;
+                    sentence = getSentence(possible_text);
+                    amigoSpeak(sentence);
                 }
 
                 // Check if the answer is confirmed after the second confirmation question
@@ -638,15 +714,21 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 						break;
 					} else {
 						result = "wrong_answer";
-	                    std::vector<std::string> possible_text;
-	                    possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
-	                    possible_text.push_back("Apparently I mis understood, I'm sorry, could you please repeat it");
-	                    possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
-	                    possible_text.push_back("I was wrong, I'm sorry, could you please repeat it");
-	                    possible_text.push_back("Maybe there is something wrong with my ears, I'm sorry, could you please repeat it");
-	                    std::string sentence;
-	                    sentence = getSentence(possible_text);
-	                    amigoSpeak(sentence);
+                        std::vector<std::string> possible_text;
+                        if ((n_tries + 1) == n_tries_max) {
+                            possible_text.push_back("I was not able to understand what you were saying for a longer time.");
+                            possible_text.push_back("I'm sorry, I was not able to understand what you were saying for a longer time.");
+                        }
+                        else {
+                            possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
+                            possible_text.push_back("Apparently I mis understood, I'm sorry, could you please repeat it");
+                            possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
+                            possible_text.push_back("I was wrong, I'm sorry, could you please repeat it");
+                            possible_text.push_back("Maybe there is something wrong with my ears, I'm sorry, could you please repeat it");
+                        }
+                        std::string sentence;
+                        sentence = getSentence(possible_text);
+                        amigoSpeak(sentence);
 						++n_tries;
 					}
 				}
@@ -656,12 +738,23 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                     setColor(1,0,0); // color red
                     result = "no_answer";
                     if (type == "sentences") {
-                        amigoSpeak("I'm sorry, I didn't hear a confirmation. Could you please repeat what you want me to do?");
+                        std::vector<std::string> possible_text;
+                        possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you please repeat what you want me to do?");
+                        possible_text.push_back("I didn't hear a confirmation, sorry. Could you please repeat what you want me to do?");
+                        possible_text.push_back("I didn't hear a confirmation, sorry. What did you want me to do?");
+                        std::string sentence;
+                        sentence = getSentence(possible_text);
+                        amigoSpeak(sentence);
                     }
                     else {
                         std::string art = (start_with_vowel)?"an ":"a ";
-                        starting_txt = "I'm sorry, I didn't hear a confirmation. Could you please specify which " + type + " you need?";
-                        amigoSpeak(starting_txt);
+                        std::vector<std::string> possible_text;
+                        possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you please specify which " + type + " you mean?");
+                        possible_text.push_back("I didn't hear a confirmation, sorry. Could you please specify which " + type + " you mean?");
+                        possible_text.push_back("I didn't hear a confirmation, sorry. Which " + type + " did you mean?");
+                        std::string sentence;
+                        sentence = getSentence(possible_text);
+                        amigoSpeak(sentence);
                     }
 					++n_tries;
 				}
@@ -673,7 +766,20 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 		else {
             setColor(1,0,0); // color red
             result = "no_answer";
-            amigoSpeak("I did not hear you, I'm sorry.");
+            std::vector<std::string> possible_text;
+            if ((n_tries + 1) == n_tries_max) {
+                possible_text.push_back("I did not hear you for a longer time.");
+                possible_text.push_back("I'm sorry, I did not hear from you for a longer time.");
+            }
+            else {
+                possible_text.push_back("I did not hear you, I'm sorry. Please say something.");
+                possible_text.push_back("Did you say something? In any case, I was not able to hear you.");
+                possible_text.push_back("I did not hear you, maybe you should get a little closer to me.");
+            }
+            std::string sentence;
+            sentence = getSentence(possible_text);
+            amigoSpeak(sentence);
+
             ROS_DEBUG("n_tries before = %i", n_tries);
             ++n_tries;
             ROS_DEBUG("n_tries now = %i", n_tries);
@@ -827,16 +933,75 @@ bool Interpreter::getContinue(speech_interpreter::GetContinue::Request  &req, sp
 std::string Interpreter::getSentence(std::vector<std::string> possible_text) {
 
     int max = possible_text.size();
-    ROS_INFO("max =  %i", max);
+    //ROS_INFO("max =  %i", max);
     int output;
     output = (max) * ((double)rand() / (double)RAND_MAX);
-   	ROS_INFO("output =  %i", output);
+    //ROS_INFO("output =  %i", output);
     std::string sentence;
     sentence = possible_text[output];
-    ROS_INFO("chosen sentence =  %s", sentence.c_str());
+    //ROS_INFO("chosen sentence =  %s", sentence.c_str());
 
     return sentence;
 }
 
+/**
+ * Service that asks user yes or no
+ */
+bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_interpreter::GetYesNo::Response &res) {
+
+    // Get variables
+    unsigned int n_tries_max = req.n_tries_max;
+    double time_out = req.time_out;
+    const double t_max_question = std::max(time_out, time_out/(2.0*n_tries_max));
+    unsigned int n_tries = 0;
+    unsigned int n_tries_no = 0;
+
+    ROS_INFO("I will try to receive yes no %d tries and time out of %f", n_tries_max, time_out);
+
+    while (n_tries < n_tries_max) {
+        if (waitForAnswer("yesno", t_max_question)) {
+			if (answer_ == "yes" || answer_ == "y") {
+				setColor(1,0,0); // color red
+				amigoSpeak("I heard yes");
+				res.answer = "true";
+				setColor(0,0,1); // color blue
+				return true;
+			}
+			else {
+				if (!(answer_ == "no")) {
+					amigoSpeak("Could you please answer with yes or no?");
+					res.answer = "false";
+                    
+                }
+                else {
+                    amigoSpeak("I heard no, is that correct");
+                    while (n_tries_no < 5) {
+						if (waitForAnswer("yesno", t_max_question)){
+							if (answer_ == "yes" || answer_ == "y") {
+								amigoSpeak("Certainly");
+								res.answer = "false";
+								return true;
+							}
+							else if (!(answer_=="no")){
+								amigoSpeak("Could you please answer with yes or no?");
+								++n_tries_no;
+							}
+							else{
+								amigoSpeak("Answer the first question again!");
+								res.answer = "false";
+								break;
+							}	
+						}				
+					}
+				}
+				++n_tries;
+				
+			}
+			
+		}
+		setColor(0,0,1); // color blue
+	}
+	return true;
+}
 
 }
