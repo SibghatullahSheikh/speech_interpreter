@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Interpreter.cpp
  *
  *  Created on: Nov 20, 2012
@@ -44,6 +44,7 @@ Interpreter::Interpreter() : answer_("") {
 	action_service_ = nh.advertiseService("get_action_user", &Interpreter::getAction, this);
     continue_service_ = nh.advertiseService("get_continue", &Interpreter::getContinue, this);
     yes_no_service_ = nh.advertiseService("get_yes_no", &Interpreter::getYesNo, this);
+    cleanup_service_ = nh.advertiseService("get_cleanup", &Interpreter::getCleanup, this);
 
     pub_speech_ =  nh.serviceClient<text_to_speech_philips::amigo_speakup_advanced>("/amigo_speakup_advanced");
 
@@ -133,6 +134,7 @@ void Interpreter::initializeSpeechServicesTopics(ros::NodeHandle& nh) {
 	fixed_list.push_back("name");      // TODO this should be loaded from yaml?
 	fixed_list.push_back("sentences"); // TODO this should be loaded from yaml?
     fixed_list.push_back("continue"); // TODO this should be loaded from yaml?
+    fixed_list.push_back("cleanup"); // TODO this should be loaded from yaml?
 
 	for (std::vector<std::string>::const_iterator it = fixed_list.begin(); it != fixed_list.end(); ++it) {
 		//ROS_INFO("Creating start and stop services for %s", it->c_str());
@@ -598,7 +600,9 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         t_max_question = 300; // = 5 minutes, in e-gpsr 2013 amigo should handle waiting long time for input.
     } else if (type == "bedroom" || type =="livingroom" || type == "kitchen" || type == "lobby") {
         starting_txt = "Can you give me the exact location?";
-	} else {
+    } else if (type == "cleanup") {
+        starting_txt = "What do you want me to do";
+    } else {
 		std::string art = (start_with_vowel)?"an ":"a ";
         starting_txt = "Can you specify which " + type + " you mean?";
     }    
@@ -616,8 +620,22 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
             std::string result2;
 
             if ( type == "sentences") {
-                line_number = getLineNumber(answer_);
-                result2 = getTextWithSpaces(line_number);
+                line_number = getLineNumber(answer_, "action");
+                result2 = getTextWithSpaces(line_number, "action");
+
+                amigoSpeak("I heard " + result2);
+                std::vector<std::string> possible_text;
+                possible_text.push_back("Is that correct?");
+                possible_text.push_back("Am I right?");
+                possible_text.push_back("Is that okay?");
+                possible_text.push_back("Is that alright?");
+                std::string sentence;
+                sentence = getSentence(possible_text);
+                amigoSpeak(sentence);
+            }
+            if ( type == "cleanup") {
+                line_number = getLineNumber(answer_, "cleanup");
+                result2 = getTextWithSpaces(line_number, "cleanup");
 
                 amigoSpeak("I heard " + result2);
                 std::vector<std::string> possible_text;
@@ -680,7 +698,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 			// If no answer heard to confirmation question, ask for confirmation again
 			else {
                 setColor(1,0,0); // color red
-                if ( type == "sentences") {
+                if ( type == "sentences" || type == "cleanup") {
                     std::vector<std::string> possible_text;
                     possible_text.push_back("I did not hear you, did you say "+ result2);
                     possible_text.push_back("Did you say "+ result2 + ". Could you confirm that?");
@@ -737,7 +755,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 				else {
                     setColor(1,0,0); // color red
                     result = "no_answer";
-                    if (type == "sentences") {
+                    if (type == "sentences" || type == "cleanup") {
                         std::vector<std::string> possible_text;
                         possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you please repeat what you want me to do?");
                         possible_text.push_back("I didn't hear a confirmation, sorry. Could you please repeat what you want me to do?");
@@ -820,9 +838,15 @@ void Interpreter::amigoSpeak(std::string txt) {
 /**
  * Function that gets the line number of the spoken input in gpsr_without_spaces.txt
  */
-int Interpreter::getLineNumber(std::string text_at_line) {
+int Interpreter::getLineNumber(std::string text_at_line, std::string category) {
 
-    std::string path = ros::package::getPath("speech_interpreter") + "/include/gpsr_without_spaces.txt";
+    std::string path;
+    if (category == "action") {
+        path = ros::package::getPath("speech_interpreter") + "/include/gpsr_without_spaces.txt";
+    }
+    else if (category == "cleanup") {
+        path = ros::package::getPath("speech_interpreter") + "/include/cleanup_without_spaces.txt";
+    }
 
     ifstream myfile;
     myfile.open(path.c_str());
@@ -850,9 +874,15 @@ int Interpreter::getLineNumber(std::string text_at_line) {
 /**
  * Function that gets the line number of the spoken input in gpsr_without_spaces.txt
  */
-std::string Interpreter::getTextWithSpaces(int number) {
+std::string Interpreter::getTextWithSpaces(int number, std::string category) {
 
-    std::string path = ros::package::getPath("speech_interpreter") + "/include/gpsr_with_spaces.txt";
+    std::string path;
+    if (category == "action") {
+        path = ros::package::getPath("speech_interpreter") + "/include/gpsr_with_spaces.txt";
+    }
+    else if (category == "cleanup") {
+        path = ros::package::getPath("speech_interpreter") + "/include/cleanup_with_spaces.txt";
+    }
 
     ifstream myfile;
     myfile.open(path.c_str());
@@ -1003,5 +1033,49 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
 	}
 	return true;
 }
+
+/**
+ * Service that asks user which room to clean
+ */
+bool Interpreter::getCleanup(speech_interpreter::GetCleanup::Request  &req, speech_interpreter::GetCleanup::Response &res) {
+
+    // Get variables
+    unsigned int n_tries_max = req.n_tries_max;
+    double time_out = req.time_out;
+
+    // Initial response is to clean up the livingroom
+    res.answer = "cleanupthelivingroom";
+
+    ROS_INFO("I will try to get the specific room to cleanup %d tries and time out of %f", n_tries_max, time_out);
+
+    double t_start = ros::Time::now().toSec();
+
+    if (iExplainedLights == false) {
+        // Explain lights during questioning:
+        // Red: Amigo talks
+        // Green: Questioner talks
+        setColor(1,0,0); // color red
+        std::string explaining_txt = "Before I ask you what I can do for you, I just want to tell you that if my lights are red during questioning, I will do the word and when my lights are green during questioning, you can talk.";
+        amigoSpeak(explaining_txt);
+
+        iExplainedLights = true;
+    }
+
+    // Get action description
+    int max_num_tries_action = 5;
+    std::string cleanuproom = askUser("cleanup", max_num_tries_action, time_out);
+    ROS_DEBUG("Received action %s, %f seconds left for refining action", cleanuproom.c_str(), ros::Time::now().toSec() - t_start);
+
+    if (cleanuproom == "no_answer" || cleanuproom == "wrong_answer") {
+        amigoSpeak("But I will just start to clean up the livingroom, I guess that that room was on your todo list.");
+    }
+    else {
+        res.answer = cleanuproom;
+    }
+
+
+    return true;
+}
+
 
 }

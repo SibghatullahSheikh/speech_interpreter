@@ -1,0 +1,4 @@
+cleanupthelivingroom
+cleanupthekitchen
+cleanupthelobby
+cleanupthebedroom
