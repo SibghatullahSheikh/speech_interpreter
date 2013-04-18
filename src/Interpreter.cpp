@@ -633,7 +633,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 sentence = getSentence(possible_text);
                 amigoSpeak(sentence);
             }
-            if ( type == "cleanup") {
+            else if ( type == "cleanup") {
                 line_number = getLineNumber(answer_, "cleanup");
                 result2 = getTextWithSpaces(line_number, "cleanup");
 
