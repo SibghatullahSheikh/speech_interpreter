@@ -1003,7 +1003,7 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
                             std::string sentence;
                             sentence = getSentence(possible_text);
                             amigoSpeak(sentence);
-                            res.answer = "false";
+                            res.answer = "true";
                             return true;
                         }
                         else if (!(answer_=="no")){
@@ -1023,8 +1023,8 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
                             std::string sentence;
                             sentence = getSentence(possible_text);
                             amigoSpeak(sentence);
-                            res.answer = "true";
-                            break;
+                            res.answer = "false";
+                            return true;
                         }
                     }
                     else {
@@ -1034,6 +1034,7 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
                         if ((n_tries + 1) == n_tries_max) {
                             possible_text.push_back("I did not hear you for a longer time.");
                             possible_text.push_back("I'm sorry, I did not hear from you for a longer time.");
+                            return true;
                         }
                         else {
                             possible_text.push_back("I did not hear you, I'm sorry. Please say yes or no.");
@@ -1101,7 +1102,7 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
                                 sentence = getSentence(possible_text);
                                 amigoSpeak(sentence);
                                 res.answer = "true";
-								break;
+                                return true;
 							}	
                         }
                         else {
@@ -1111,6 +1112,7 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
                             if ((n_tries + 1) == n_tries_max) {
                                 possible_text.push_back("I did not hear you for a longer time.");
                                 possible_text.push_back("I'm sorry, I did not hear from you for a longer time.");
+                                return true;
                             }
                             else {
                                 possible_text.push_back("I did not hear you, I'm sorry. Please say yes or no.");
@@ -1142,6 +1144,7 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
             if ((n_tries + 1) == n_tries_max) {
                 possible_text.push_back("I did not hear you for a longer time.");
                 possible_text.push_back("I'm sorry, I did not hear from you for a longer time.");
+                return true;
             }
             else {
                 possible_text.push_back("I did not hear you, I'm sorry. Please say yes or no.");
