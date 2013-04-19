@@ -2,7 +2,8 @@
  * Interpreter.cpp
  *
  *  Created on: Nov 20, 2012
- *      Author: jelfring
+ *      Authors: Jos Elfring
+ *               Erik Geerts
  */
 
 #include "Interpreter.h"
@@ -625,7 +626,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 
                 amigoSpeak("I heard " + result2);
                 std::vector<std::string> possible_text;
-                possible_text.push_back("Is that correct?");
+                possible_text.push_back("Is that corect?"); //Amigo's output with "corect?" is better than "correct?"
                 possible_text.push_back("Am I right?");
                 possible_text.push_back("Is that okay?");
                 possible_text.push_back("Is that alright?");
@@ -639,7 +640,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 
                 amigoSpeak("I heard " + result2);
                 std::vector<std::string> possible_text;
-                possible_text.push_back("Is that correct?");
+                possible_text.push_back("Is that corect?"); //Amigo's output with "corect?" is better than "correct?"
                 possible_text.push_back("Am I right?");
                 possible_text.push_back("Is that okay?");
                 possible_text.push_back("Is that alright?");
@@ -650,7 +651,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
             else {
                 amigoSpeak("I heard " + result);
                 std::vector<std::string> possible_text;
-                possible_text.push_back("Is that correct?");
+                possible_text.push_back("Is that corect?"); //Amigo's output with "corect?" is better than "correct?"
                 possible_text.push_back("Am I right?");
                 possible_text.push_back("Is that okay?");
                 possible_text.push_back("Is that alright?");
@@ -984,7 +985,7 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
     double time_out = req.time_out;
     const double t_max_question = std::max(time_out, time_out/(2.0*n_tries_max));
     unsigned int n_tries = 0;
-    unsigned int n_tries_no = 0;
+    double t_start = ros::Time::now().toSec();
 
     ROS_INFO("I will try to receive yes no %d tries and time out of %f", n_tries_max, time_out);
 
@@ -992,43 +993,173 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
         if (waitForAnswer("yesno", t_max_question)) {
 			if (answer_ == "yes" || answer_ == "y") {
 				setColor(1,0,0); // color red
-				amigoSpeak("I heard yes");
-				res.answer = "true";
-				setColor(0,0,1); // color blue
+                amigoSpeak("I heard yes, is that corect?"); //Amigo's output with "corect?" is better than "correct?"
+                while (n_tries < n_tries_max) {
+                    if (waitForAnswer("yesno", t_max_question)){
+                        if (answer_ == "yes" || answer_ == "y") {
+                            std::vector<std::string> possible_text;
+                            possible_text.push_back("Certainly");
+                            possible_text.push_back("Okay");
+                            std::string sentence;
+                            sentence = getSentence(possible_text);
+                            amigoSpeak(sentence);
+                            res.answer = "false";
+                            return true;
+                        }
+                        else if (!(answer_=="no")){
+                            std::vector<std::string> possible_text;
+                            possible_text.push_back("Could you please answer with yes or no?");
+                            possible_text.push_back("Please answer with yes or no");
+                            possible_text.push_back("Yes or no?");
+                            std::string sentence;
+                            sentence = getSentence(possible_text);
+                            amigoSpeak(sentence);
+                            ++n_tries;
+                        }
+                        else{
+                            std::vector<std::string> possible_text;
+                            possible_text.push_back("So I will assume that you said no.");
+                            possible_text.push_back("Then I guess you would like to answer the question with no.");
+                            std::string sentence;
+                            sentence = getSentence(possible_text);
+                            amigoSpeak(sentence);
+                            res.answer = "true";
+                            break;
+                        }
+                    }
+                    else {
+                        setColor(1,0,0); // color red
+                        res.answer = "false"; //= no answer
+                        std::vector<std::string> possible_text;
+                        if ((n_tries + 1) == n_tries_max) {
+                            possible_text.push_back("I did not hear you for a longer time.");
+                            possible_text.push_back("I'm sorry, I did not hear from you for a longer time.");
+                        }
+                        else {
+                            possible_text.push_back("I did not hear you, I'm sorry. Please say yes or no.");
+                            possible_text.push_back("Did you say yes or no? In any case, I was not able to hear you.");
+                            possible_text.push_back("I did not hear you, maybe you should get a little closer to me.");
+                        }
+                        std::string sentence;
+                        sentence = getSentence(possible_text);
+                        amigoSpeak(sentence);
+
+                        ROS_DEBUG("n_tries before = %i", n_tries);
+                        ++n_tries;
+                        ROS_DEBUG("n_tries now = %i", n_tries);
+                        ROS_DEBUG("n_tries_max = %i", n_tries_max);
+                        double time_check = ros::Time::now().toSec() - t_start;
+                        ROS_DEBUG("rostime: now - t_start = %f", time_check);
+                        ROS_DEBUG("time_out = %f", time_out);
+                    }
+                    setColor(0,0,1); // color blue
+                }
+                setColor(0,0,1); // color blue
 				return true;
 			}
 			else {
 				if (!(answer_ == "no")) {
-					amigoSpeak("Could you please answer with yes or no?");
+                    std::vector<std::string> possible_text;
+                    possible_text.push_back("Could you please answer with yes or no?");
+                    possible_text.push_back("Please answer with yes or no");
+                    possible_text.push_back("Yes or no?");
+                    std::string sentence;
+                    sentence = getSentence(possible_text);
+                    amigoSpeak(sentence);
 					res.answer = "false";
                     
                 }
                 else {
-                    amigoSpeak("I heard no, is that correct");
-                    while (n_tries_no < 5) {
+                    amigoSpeak("I heard no, is that corect?"); //Amigo's output with "corect?" is better than "correct?"
+                    while (n_tries < n_tries_max) {
 						if (waitForAnswer("yesno", t_max_question)){
 							if (answer_ == "yes" || answer_ == "y") {
-								amigoSpeak("Certainly");
+                                std::vector<std::string> possible_text;
+                                possible_text.push_back("Certainly");
+                                possible_text.push_back("Okay");
+                                std::string sentence;
+                                sentence = getSentence(possible_text);
+                                amigoSpeak(sentence);
 								res.answer = "false";
 								return true;
 							}
 							else if (!(answer_=="no")){
-								amigoSpeak("Could you please answer with yes or no?");
-								++n_tries_no;
+                                std::vector<std::string> possible_text;
+                                possible_text.push_back("Could you please answer with yes or no?");
+                                possible_text.push_back("Please answer with yes or no");
+                                possible_text.push_back("Yes or no?");
+                                std::string sentence;
+                                sentence = getSentence(possible_text);
+                                amigoSpeak(sentence);
+                                ++n_tries;
 							}
 							else{
-								amigoSpeak("Answer the first question again!");
-								res.answer = "false";
+                                std::vector<std::string> possible_text;
+                                possible_text.push_back("So I will assume that you said yes.");
+                                possible_text.push_back("Then I guess you would like to answer the question with yes.");
+                                std::string sentence;
+                                sentence = getSentence(possible_text);
+                                amigoSpeak(sentence);
+                                res.answer = "true";
 								break;
 							}	
-						}				
+                        }
+                        else {
+                            setColor(1,0,0); // color red
+                            res.answer = "false"; //= no answer
+                            std::vector<std::string> possible_text;
+                            if ((n_tries + 1) == n_tries_max) {
+                                possible_text.push_back("I did not hear you for a longer time.");
+                                possible_text.push_back("I'm sorry, I did not hear from you for a longer time.");
+                            }
+                            else {
+                                possible_text.push_back("I did not hear you, I'm sorry. Please say yes or no.");
+                                possible_text.push_back("Did you say yes or no? In any case, I was not able to hear you.");
+                                possible_text.push_back("I did not hear you, maybe you should get a little closer to me.");
+                            }
+                            std::string sentence;
+                            sentence = getSentence(possible_text);
+                            amigoSpeak(sentence);
+
+                            ROS_DEBUG("n_tries before = %i", n_tries);
+                            ++n_tries;
+                            ROS_DEBUG("n_tries now = %i", n_tries);
+                            ROS_DEBUG("n_tries_max = %i", n_tries_max);
+                            double time_check = ros::Time::now().toSec() - t_start;
+                            ROS_DEBUG("rostime: now - t_start = %f", time_check);
+                            ROS_DEBUG("time_out = %f", time_out);
+                        }
+                        setColor(0,0,1); // color blue
 					}
 				}
-				++n_tries;
-				
 			}
 			
 		}
+        else {
+            setColor(1,0,0); // color red
+            res.answer = "false"; //= no answer
+            std::vector<std::string> possible_text;
+            if ((n_tries + 1) == n_tries_max) {
+                possible_text.push_back("I did not hear you for a longer time.");
+                possible_text.push_back("I'm sorry, I did not hear from you for a longer time.");
+            }
+            else {
+                possible_text.push_back("I did not hear you, I'm sorry. Please say yes or no.");
+                possible_text.push_back("Did you say yes or no? In any case, I was not able to hear you.");
+                possible_text.push_back("I did not hear you, maybe you should get a little closer to me.");
+            }
+            std::string sentence;
+            sentence = getSentence(possible_text);
+            amigoSpeak(sentence);
+
+            ROS_DEBUG("n_tries before = %i", n_tries);
+            ++n_tries;
+            ROS_DEBUG("n_tries now = %i", n_tries);
+            ROS_DEBUG("n_tries_max = %i", n_tries_max);
+            double time_check = ros::Time::now().toSec() - t_start;
+            ROS_DEBUG("rostime: now - t_start = %f", time_check);
+            ROS_DEBUG("time_out = %f", time_out);
+        }
 		setColor(0,0,1); // color blue
 	}
 	return true;
