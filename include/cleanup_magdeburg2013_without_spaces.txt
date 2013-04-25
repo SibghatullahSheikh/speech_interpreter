@@ -1,0 +1,3 @@
+cleanupthelivingroom
+cleanupthekitchen
+cleanupthediningroom

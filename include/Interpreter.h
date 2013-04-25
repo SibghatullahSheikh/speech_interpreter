@@ -22,6 +22,7 @@
 #include "speech_interpreter/GetContinue.h"
 #include "speech_interpreter/GetYesNo.h"
 #include "speech_interpreter/GetCleanup.h"
+#include "speech_interpreter/GetOpenChallenge.h"
 #include "std_msgs/String.h"
 
 namespace SpeechInterpreter {
@@ -47,6 +48,7 @@ public:
     bool getContinue(speech_interpreter::GetContinue::Request  &req, speech_interpreter::GetContinue::Response &res);
     bool getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_interpreter::GetYesNo::Response &res);
     bool getCleanup(speech_interpreter::GetCleanup::Request  &req, speech_interpreter::GetCleanup::Response &res);
+    bool getOpenChallenge(speech_interpreter::GetOpenChallenge::Request  &req, speech_interpreter::GetOpenChallenge::Response &res);
 
 	/**
 	 * Callbacks
@@ -83,6 +85,7 @@ public:
     ros::ServiceServer continue_service_;
     ros::ServiceServer yes_no_service_;
     ros::ServiceServer cleanup_service_;
+    ros::ServiceServer open_challenge_service_;
 
 	// Knowledge maps
 	std::map<std::string, std::string> action_map_;

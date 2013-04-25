@@ -1,0 +1,64 @@
+Bring a drink to a seat
+Bring a drink to a table
+Bring a drink to a storage
+Bring a drink to a decoration
+Bring a drink to an appliance
+Bring a medicine to a seat
+Bring a medicine to a table
+Bring a medicine to a storage
+Bring a medicine to a decoration
+Bring a medicine to an appliance
+Bring some stuff to a seat
+Bring some stuff to a table
+Bring some stuff to a storage
+Bring some stuff to a decoration
+Bring some stuff to an appliance
+Bring some food to a seat
+Bring some food to a table
+Bring some food to a storage
+Bring some food to a decoration
+Bring some food to an appliance
+Carry a drink to a seat
+Carry a drink to a table
+Carry a drink to a storage
+Carry a drink to a decoration
+Carry a drink to an appliance
+Carry a medicine to a seat
+Carry a medicine to a table
+Carry a medicine to a storage
+Carry a medicine to a decoration
+Carry a medicine to an appliance
+Carry some stuff to a seat
+Carry some stuff to a table
+Carry some stuff to a storage
+Carry some stuff to a decoration
+Carry some stuff to an appliance
+Carry some food to a seat
+Carry some food to a table
+Carry some food to a storage
+Carry some food to a decoration
+Carry some food to an appliance
+Get me a drink
+Get me a medicine
+Get me some stuff
+Get me some food
+Give me a drink
+Give me a medicine
+Give me some stuff
+Give me some food
+Point at a seat
+Point at a table
+Point at a storage
+Point at a decoration
+Point at an appliance
+Go to an exit
+Move to an exit
+Navigate to an exit
+Detect a drink
+Detect a medicine
+Detect some stuff
+Detect some food
+Find a drink
+Find a medicine
+Find some stuff
+Find some food

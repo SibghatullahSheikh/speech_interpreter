@@ -1,0 +1,4 @@
+uint32 n_tries_max
+float32 time_out
+---
+string answer

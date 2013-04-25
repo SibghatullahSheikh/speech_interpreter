@@ -1,0 +1,7 @@
+go to the lounge
+go to the cabinet
+go to the desk
+go to the dinnertable
+go to the sink
+go to the bar
+go to the couchtable

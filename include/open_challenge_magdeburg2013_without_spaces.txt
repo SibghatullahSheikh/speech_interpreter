@@ -1,0 +1,7 @@
+gotothelounge
+gotothecabinet
+gotothedesk
+gotothedinnertable
+gotothesink
+gotothebar
+gotothecouchtable
