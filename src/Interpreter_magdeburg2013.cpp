@@ -80,12 +80,12 @@ void Interpreter::initializeMappings(ros::NodeHandle& nh) {
 	action_map_["navigate"] = "leave";
 
 	// Categories
-    category_map_["object_category"].push_back(std::make_pair("drink", 7));
-    category_map_["object_category"].push_back(std::make_pair("stuff", 10));
+    category_map_["object_category"].push_back(std::make_pair("drink", 6));
+    category_map_["object_category"].push_back(std::make_pair("stuff", 11));
     category_map_["object_category"].push_back(std::make_pair("medicine", 3));
     category_map_["object_category"].push_back(std::make_pair("food", 5));
-    category_map_["location_category"].push_back(std::make_pair("seat", 7));
-	category_map_["location_category"].push_back(std::make_pair("table", 2));
+    category_map_["location_category"].push_back(std::make_pair("seat", 5));
+    category_map_["location_category"].push_back(std::make_pair("table", 4));
     category_map_["location_category"].push_back(std::make_pair("storage", 2));
     category_map_["location_category"].push_back(std::make_pair("decoration", 2));
     category_map_["location_category"].push_back(std::make_pair("appliance", 4));
@@ -173,7 +173,7 @@ bool Interpreter::getInfo(speech_interpreter::GetInfo::Request  &req, speech_int
 	std::string response = "";
 
 	// Validate input
-	if (type == "name") {
+    if (type == "name") {
 		ROS_INFO("I will get you a name, %d tries and time out of %f", n_tries, time_out);
 
     }
