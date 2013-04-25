@@ -105,6 +105,8 @@ public:
     std::string getSentence(std::vector<std::string> possible_text);
 private:
     bool iExplainedLights;
+
+    ros::Publisher pub_amigo_speech_sim_; // For using amigo's speech in simulation
 };
 
 }
