@@ -179,6 +179,11 @@ bool Interpreter::getInfo(speech_interpreter::GetInfo::Request  &req, speech_int
         ROS_INFO("I will get you a drink in %d tries and time out of %f", n_tries, time_out);
 
     }
+    else if (type == "room_cleanup") {
+        // USED IN CLEANUP!!!
+        ROS_INFO("I will get you a room in %d tries and time out of %f", n_tries, time_out);
+
+    }
     else {
 
 		// Iterate over categories and determine if it is present
@@ -656,12 +661,29 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         possible_text.push_back("What drink would you like to have?");
         possible_text.push_back("Which drink can I serve you?");
         starting_txt = getSentence(possible_text);
+    } else if (type == "room_cleanup") {
+        if (iExplainedLights == false) {
+            // Explain lights during questioning:
+            // Red: Amigo talks
+            // Green: Questioner talks
+            setColor(1,0,0); // color red
+            std::string explaining_txt = "Before I ask you what drink you would like, I just want to tell you that if my lights are red during questioning, I will do the word and when my lights are green during questioning, you can talk.";
+            amigoSpeak(explaining_txt);
+
+            iExplainedLights = true;
+        }
+        type = "room";
+        std::vector<std::string> possible_text;
+        possible_text.push_back("Could you please tell me which room you like me to clean?");
+        possible_text.push_back("What room would you like me to clean?");
+        possible_text.push_back("Which room can I clean for you?");
+        starting_txt = getSentence(possible_text);
 
     } else {
 		std::string art = (start_with_vowel)?"an ":"a ";
         starting_txt = "Can you specify which " + type + " you mean?";
     }    
-
+    ROS_INFO("type = %s", type.c_str());
     // Ask
     amigoSpeak(starting_txt);
     ROS_DEBUG("Max time to wait for answer = %f", t_max_question);
