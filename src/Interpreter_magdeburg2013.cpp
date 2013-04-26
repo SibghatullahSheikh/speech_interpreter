@@ -114,7 +114,7 @@ void Interpreter::initializeSpeechServicesTopics(ros::NodeHandle& nh) {
 
 			// Only create start/stop services if category has more than one member
 			if (it2->second > 1) {
-				//ROS_INFO("Creating start and stop services for category %s", it2->first.c_str());
+                //ROS_INFO("Creating start and stop services for category %s", it2->first.c_str());
 				category_srv_clients_map_[it2->first] =
 						std::make_pair(nh.serviceClient<std_srvs::Empty>("/speech_" + it2->first + "/start"),
 								nh.serviceClient<std_srvs::Empty>("/speech_" + it2->first + "/stop"));
@@ -140,6 +140,7 @@ void Interpreter::initializeSpeechServicesTopics(ros::NodeHandle& nh) {
     fixed_list.push_back("cleanup"); // TODO this should be loaded from yaml?
     fixed_list.push_back("open_challenge"); // TODO this should be loaded from yaml?
     fixed_list.push_back("drink_cocktail"); // TODO this should be loaded from yaml?
+    fixed_list.push_back("demo_challenge"); // TODO this should be loaded from yaml?
 
 	for (std::vector<std::string>::const_iterator it = fixed_list.begin(); it != fixed_list.end(); ++it) {
 		//ROS_INFO("Creating start and stop services for %s", it->c_str());
@@ -184,6 +185,11 @@ bool Interpreter::getInfo(speech_interpreter::GetInfo::Request  &req, speech_int
     else if (type == "room_cleanup") {
         // USED IN CLEANUP!!!
         ROS_INFO("I will get you a room in %d tries and time out of %f", n_tries, time_out);
+
+    }
+    else if (type == "demo_challenge") {
+        // USED IN CLEANUP!!!
+        ROS_INFO("I will get you what you want on your sandwich in %d tries and time out of %f", n_tries, time_out);
 
     }
     else {
@@ -370,7 +376,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 					                    possible_text.push_back("Very well!");
 					                    possible_text.push_back("Fine!");
 					                    possible_text.push_back("All right!");
-					                    possible_text.push_back("Okay!");
+                                        possible_text.push_back("Okay!");
 					                    std::string sentence;
 					                    sentence = getSentence(possible_text);
 					                    amigoSpeak(sentence);
@@ -647,6 +653,8 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         starting_txt = "What do you want me to do";
     } else if (type == "open_challenge") {
         starting_txt = "Where do you want me to go";
+    } else if (type == "demo_challenge") {
+        starting_txt = "";
     } else if (type == "drink_cocktail") {
         if (iExplainedLights == false) {
             // Explain lights during questioning:
@@ -740,6 +748,20 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 sentence = getSentence(possible_text);
                 amigoSpeak(sentence);
             }
+            else if ( type == "demo_challenge") {
+                line_number = getLineNumber(answer_, "demo_challenge");
+                result2 = getTextWithSpaces(line_number, "demo_challenge");
+
+                amigoSpeak("I heard " + result2);
+                std::vector<std::string> possible_text;
+                possible_text.push_back("Is that corect?"); //Amigo's output with "corect?" is better than "correct?"
+                possible_text.push_back("Am I right?");
+                possible_text.push_back("Is that okay?");
+                possible_text.push_back("Is that alright?");
+                std::string sentence;
+                sentence = getSentence(possible_text);
+                amigoSpeak(sentence);
+            }
             else {
                 amigoSpeak("I heard " + result);
                 std::vector<std::string> possible_text;
@@ -791,7 +813,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 			// If no answer heard to confirmation question, ask for confirmation again
 			else {
                 setColor(1,0,0); // color red
-                if ( type == "sentences" || type == "cleanup" || type == "open_challenge") {
+                if ( type == "sentences" || type == "cleanup" || type == "open_challenge" || type == "demo_challenge") {
                     std::vector<std::string> possible_text;
                     possible_text.push_back("I did not hear you, did you say "+ result2);
                     possible_text.push_back("Did you say "+ result2 + ". Could you confirm that?");
@@ -848,7 +870,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 				else {
                     setColor(1,0,0); // color red
                     result = "no_answer";
-                    if (type == "sentences" || type == "cleanup" || type == "open_challenge") {
+                    if (type == "sentences" || type == "cleanup" || type == "open_challenge" || type == "demo_challenge") {
                         std::vector<std::string> possible_text;
                         possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you please repeat what you want me to do?");
                         possible_text.push_back("I didn't hear a confirmation, sorry. Could you please repeat what you want me to do?");
@@ -948,6 +970,9 @@ int Interpreter::getLineNumber(std::string text_at_line, std::string category) {
     else if (category == "open_challenge") {
         path = ros::package::getPath("speech_interpreter") + "/include/open_challenge_magdeburg2013_without_spaces.txt";
     }
+    else if (category == "demo_challenge") {
+        path = ros::package::getPath("speech_interpreter") + "/include/demo_challenge_magdeburg2013_without_spaces.txt";
+    }
 
     ifstream myfile;
     myfile.open(path.c_str());
@@ -986,6 +1011,9 @@ std::string Interpreter::getTextWithSpaces(int number, std::string category) {
     }
     else if (category == "open_challenge") {
         path = ros::package::getPath("speech_interpreter") + "/include/open_challenge_magdeburg2013_with_spaces.txt";
+    }
+    else if (category == "demo_challenge") {
+        path = ros::package::getPath("speech_interpreter") + "/include/demo_challenge_magdeburg2013_with_spaces.txt";
     }
 
     ifstream myfile;
