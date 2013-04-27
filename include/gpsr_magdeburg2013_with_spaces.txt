@@ -1,64 +1,64 @@
-Bring a drink to a seat
-Bring a drink to a table
-Bring a drink to a storage
-Bring a drink to a decoration
-Bring a drink to an appliance
-Bring a medicine to a seat
-Bring a medicine to a table
-Bring a medicine to a storage
-Bring a medicine to a decoration
-Bring a medicine to an appliance
-Bring some stuff to a seat
-Bring some stuff to a table
-Bring some stuff to a storage
-Bring some stuff to a decoration
-Bring some stuff to an appliance
-Bring some food to a seat
-Bring some food to a table
-Bring some food to a storage
-Bring some food to a decoration
-Bring some food to an appliance
-Carry a drink to a seat
-Carry a drink to a table
-Carry a drink to a storage
-Carry a drink to a decoration
-Carry a drink to an appliance
-Carry a medicine to a seat
-Carry a medicine to a table
-Carry a medicine to a storage
-Carry a medicine to a decoration
-Carry a medicine to an appliance
-Carry some stuff to a seat
-Carry some stuff to a table
-Carry some stuff to a storage
-Carry some stuff to a decoration
-Carry some stuff to an appliance
-Carry some food to a seat
-Carry some food to a table
-Carry some food to a storage
-Carry some food to a decoration
-Carry some food to an appliance
-Get me a drink
-Get me a medicine
-Get me some stuff
-Get me some food
-Give me a drink
-Give me a medicine
-Give me some stuff
-Give me some food
-Point at a seat
-Point at a table
-Point at a storage
-Point at a decoration
-Point at an appliance
-Go to an exit
-Move to an exit
-Navigate to an exit
-Detect a drink
-Detect a medicine
-Detect some stuff
-Detect some food
-Find a drink
-Find a medicine
-Find some stuff
-Find some food
+bring a drink to a seat
+bring a drink to a table
+bring a drink to a storage
+bring a drink to a decoration
+bring a drink to an appliance
+bring a medicine to a seat
+bring a medicine to a table
+bring a medicine to a storage
+bring a medicine to a decoration
+bring a medicine to an appliance
+bring some stuff to a seat
+bring some stuff to a table
+bring some stuff to a storage
+bring some stuff to a decoration
+bring some stuff to an appliance
+bring some food to a seat
+bring some food to a table
+bring some food to a storage
+bring some food to a decoration
+bring some food to an appliance
+carry a drink to a seat
+carry a drink to a table
+carry a drink to a storage
+carry a drink to a decoration
+carry a drink to an appliance
+carry a medicine to a seat
+carry a medicine to a table
+carry a medicine to a storage
+carry a medicine to a decoration
+carry a medicine to an appliance
+carry some stuff to a seat
+carry some stuff to a table
+carry some stuff to a storage
+carry some stuff to a decoration
+carry some stuff to an appliance
+carry some food to a seat
+carry some food to a table
+carry some food to a storage
+carry some food to a decoration
+carry some food to an appliance
+get me a drink
+get me a medicine
+get me some stuff
+get me some food
+give me a drink
+give me a medicine
+give me some stuff
+give me some food
+point at a seat
+point at a table
+point at a storage
+point at a decoration
+point at an appliance
+go to an exit
+move to an exit
+navigate to an exit
+detect a drink
+detect a medicine
+detect some stuff
+detect some food
+find a drink
+find a medicine
+find some stuff
+find some food
