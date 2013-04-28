@@ -188,7 +188,6 @@ bool Interpreter::getInfo(speech_interpreter::GetInfo::Request  &req, speech_int
 
     }
     else if (type == "demo_challenge") {
-        // USED IN CLEANUP!!!
         ROS_INFO("I will get you what you want on your sandwich in %d tries and time out of %f", n_tries, time_out);
 
     }
@@ -228,7 +227,7 @@ bool Interpreter::getInfo(speech_interpreter::GetInfo::Request  &req, speech_int
 
 	res.answer = response;
 
-
+    setColor(0,0,1); // color blue
 	return (!response.empty());
 }
 
@@ -279,6 +278,7 @@ bool Interpreter::getAction(speech_interpreter::GetAction::Request  &req, speech
 	// Check if action is known
 	if (res.action.empty()) {
         ROS_ERROR("Code error: Action %s received over speech_sentences/output topic does not contain a known action", action.c_str());
+        setColor(0,0,1); // color blue
 		return false;
 	}
 
@@ -602,8 +602,7 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
     // Turn off speech recognition for requested category
 	if (!category_srv_clients_map_[category].second.call(srv)) {
 		ROS_WARN("Unable to turn off speech recognition for %s", category.c_str());
-	} ROS_DEBUG("Switched off speech recognition for: %s", category.c_str());
-
+    } ROS_DEBUG("Switched off speech recognition for: %s", category.c_str());
 	return (!answer_.empty());
 }
 
@@ -921,8 +920,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
             ROS_DEBUG("rostime: now - t_start = %f", time_check);
             ROS_DEBUG("time_out = %f", time_out);
 		}
-	}
-
+	} 
     return result;
 }
 
@@ -1135,6 +1133,7 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
                             sentence = getSentence(possible_text);
                             amigoSpeak(sentence);
                             res.answer = "true";
+                            setColor(0,0,1); // color blue
                             return true;
                         }
                         else if (!(answer_=="no")){
@@ -1155,6 +1154,7 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
                             sentence = getSentence(possible_text);
                             amigoSpeak(sentence);
                             res.answer = "false";
+                            setColor(0,0,1); // color blue
                             return true;
                         }
                     }
@@ -1165,6 +1165,7 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
                         if ((n_tries + 1) == n_tries_max) {
                             possible_text.push_back("I did not hear you for a longer time.");
                             possible_text.push_back("I'm sorry, I did not hear from you for a longer time.");
+                            setColor(0,0,1); // color blue
                             return true;
                         }
                         else {
@@ -1213,6 +1214,7 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
                                 sentence = getSentence(possible_text);
                                 amigoSpeak(sentence);
 								res.answer = "false";
+                                setColor(0,0,1); // color blue
 								return true;
 							}
 							else if (!(answer_=="no")){
@@ -1233,6 +1235,7 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
                                 sentence = getSentence(possible_text);
                                 amigoSpeak(sentence);
                                 res.answer = "true";
+                                setColor(0,0,1); // color blue
                                 return true;
 							}	
                         }
@@ -1243,6 +1246,7 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
                             if ((n_tries + 1) == n_tries_max) {
                                 possible_text.push_back("I did not hear you for a longer time.");
                                 possible_text.push_back("I'm sorry, I did not hear from you for a longer time.");
+                                setColor(0,0,1); // color blue
                                 return true;
                             }
                             else {
@@ -1275,6 +1279,7 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
             if ((n_tries + 1) == n_tries_max) {
                 possible_text.push_back("I did not hear you for a longer time.");
                 possible_text.push_back("I'm sorry, I did not hear from you for a longer time.");
+                setColor(0,0,1); // color blue
                 return true;
             }
             else {
@@ -1296,6 +1301,7 @@ bool Interpreter::getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_i
         }
 		setColor(0,0,1); // color blue
 	}
+    setColor(0,0,1); // color blue
 	return true;
 }
 
@@ -1337,7 +1343,7 @@ bool Interpreter::getCleanup(speech_interpreter::GetCleanup::Request  &req, spee
         res.answer = cleanuproom;
     }
 
-
+    setColor(0,0,1); // color blue
     return true;
 }
 
@@ -1381,7 +1387,7 @@ bool Interpreter::getOpenChallenge(speech_interpreter::GetOpenChallenge::Request
     }
     */
     res.answer = open_challenge;
-
+    setColor(0,0,1); // color blue
     return true;
 }
 
