@@ -692,7 +692,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 		std::string art = (start_with_vowel)?"an ":"a ";
         starting_txt = "Can you specify which " + type + " you mean?";
     }    
-    ROS_INFO("type = %s", type.c_str());
+
     // Ask
     amigoSpeak(starting_txt);
     ROS_DEBUG("Max time to wait for answer = %f", t_max_question);
