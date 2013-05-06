@@ -49,6 +49,8 @@ Interpreter::Interpreter() : answer_("") {
 
     pub_speech_ =  nh.serviceClient<text_to_speech_philips::amigo_speakup_advanced>("/amigo_speakup_advanced");
 
+    pub_amigo_speech_sim_ = nh.advertise<std_msgs::String>("/amigo_speech_sim", 10); // For using amigo's speech in simulation
+
     set_rgb_lights_ = nh.advertise<amigo_msgs::RGBLightCommand>("/user_set_rgb_lights", 100);
 
     // Initialize explained lights for get_action
@@ -821,6 +823,11 @@ void Interpreter::amigoSpeak(std::string txt) {
         {
             ROS_INFO("%s", txt.c_str());
             text_to_speech_philips::amigo_speakup_advanced speak;
+
+            // Also send the text over a topic (for simulation purposes, ask Sjoerd)
+            std_msgs::String msg_txt;
+            msg_txt.data = txt;
+            pub_amigo_speech_sim_.publish(msg_txt);
 
             speak.request.sentence = txt;
             speak.request.language = "us";
