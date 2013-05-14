@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+<launch>
+
+    <arg name="args" default="" /> 
+
+    <node pkg="speech_interpreter" type="interpreter_magdeburg2013_v2" args="$(arg args)" respawn="false" name="interpreter" output="screen">
+
+    </node>
+
+</launch>

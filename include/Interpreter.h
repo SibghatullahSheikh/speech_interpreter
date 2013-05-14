@@ -60,6 +60,11 @@ public:
 	 */
 	bool waitForAnswer(std::string category, double t_max);
 
+    /**
+     * Wait for user response over the topic given by the category parameter
+     */
+    bool waitForAction(std::string category, double t_max);
+
 	/**
 	 * Ask user for input
 	 */
