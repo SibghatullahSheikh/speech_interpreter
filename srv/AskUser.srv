@@ -1,0 +1,6 @@
+string info_type
+uint32 num_tries
+duration time_out
+---
+string[] keys
+string[] values
