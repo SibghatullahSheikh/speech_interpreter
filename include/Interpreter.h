@@ -23,7 +23,14 @@
 #include "speech_interpreter/GetYesNo.h"
 #include "speech_interpreter/GetCleanup.h"
 #include "speech_interpreter/GetOpenChallenge.h"
+
+#include "speech_interpreter/AskUser.h"
+
+#include <tue_pocketsphinx/Switch.h>
+
 #include "std_msgs/String.h"
+
+#include <psi/Client.h>
 
 namespace SpeechInterpreter {
 
@@ -37,18 +44,27 @@ public:
 	/**
 	 * Initialize mappings, services
 	 */
-    void initializeMappings(ros::NodeHandle& nh);
+    void initialize(ros::NodeHandle& nh);
 	void initializeSpeechServicesTopics(ros::NodeHandle& nh);
 
 	/**
 	 * Services offered
 	 */
-	bool getInfo(speech_interpreter::GetInfo::Request  &req, speech_interpreter::GetInfo::Response &res);
-	bool getAction(speech_interpreter::GetAction::Request  &req, speech_interpreter::GetAction::Response &res);
-    bool getContinue(speech_interpreter::GetContinue::Request  &req, speech_interpreter::GetContinue::Response &res);
-    bool getYesNo(speech_interpreter::GetYesNo::Request  &req, speech_interpreter::GetYesNo::Response &res);
-    bool getCleanup(speech_interpreter::GetCleanup::Request  &req, speech_interpreter::GetCleanup::Response &res);
-    bool getOpenChallenge(speech_interpreter::GetOpenChallenge::Request  &req, speech_interpreter::GetOpenChallenge::Response &res);
+    bool getInfoSrv(speech_interpreter::GetInfo::Request  &req, speech_interpreter::GetInfo::Response &res);
+    bool getActionSrv(speech_interpreter::GetAction::Request  &req, speech_interpreter::GetAction::Response &res);
+    bool getContinueSrv(speech_interpreter::GetContinue::Request  &req, speech_interpreter::GetContinue::Response &res);
+    bool getYesNoSrv(speech_interpreter::GetYesNo::Request  &req, speech_interpreter::GetYesNo::Response &res);
+    bool getCleanupSrv(speech_interpreter::GetCleanup::Request  &req, speech_interpreter::GetCleanup::Response &res);
+    bool getOpenChallengeSrv(speech_interpreter::GetOpenChallenge::Request  &req, speech_interpreter::GetOpenChallenge::Response &res);
+
+    bool askUser(speech_interpreter::AskUser::Request  &req, speech_interpreter::AskUser::Response &res);
+
+    bool getAction(const ros::Duration& max_duration, unsigned int max_num_tries, std::map<std::string, std::string>& answer);
+    bool getContinue(const ros::Duration& max_duration, unsigned int max_num_tries, std::map<std::string, std::string>& answer);
+    bool getYesNo(const ros::Duration& max_duration, unsigned int max_num_tries, std::map<std::string, std::string>& answer);
+    bool getCleanup(const ros::Duration& max_duration, unsigned int max_num_tries, std::map<std::string, std::string>& answer);
+    bool getOpenChallenge(const ros::Duration& max_duration, unsigned int max_num_tries, std::map<std::string, std::string>& answer);
+    bool getInfo(const std::string& type, const ros::Duration& max_duration, unsigned int max_num_tries, std::map<std::string, std::string>& answer);
 
 	/**
 	 * Callbacks
@@ -84,6 +100,18 @@ public:
 
     void setColor(int r, int g, int b);
 
+    int getPosString(std::string input_text, std::string found_text);
+
+    /**
+     * askActionInSteps, gets action in steps, in case action is not understanded in 2 tries
+     */
+    std::vector<std::string> askActionInSteps(const double time_out_action);
+
+    /**
+     * getYesNoFunc, gets action in steps, in case action is not understanded in 2 tries
+     */
+    std::string getYesNoFunc(bool confirmation, const double n_tries_max, const double time_out);
+
 	// Services
 	ros::ServiceServer info_service_;
 	ros::ServiceServer action_service_;
@@ -92,14 +120,19 @@ public:
     ros::ServiceServer cleanup_service_;
     ros::ServiceServer open_challenge_service_;
 
+    ros::ServiceServer ask_user_service_;
+
 	// Knowledge maps
 	std::map<std::string, std::string> action_map_;
-	CategoryMap category_map_;
+    CategoryMap category_map_;
 	std::map<std::string, std::vector<std::string> > action_category_map_;
 
-	// Communication maps
-	std::map<std::string, std::pair<ros::ServiceClient, ros::ServiceClient> > category_srv_clients_map_;
-	std::map<std::string, ros::Subscriber> category_sub_map_;
+    // pocketsphinx communication
+    ros::ServiceClient client_speech_recognition_;
+    ros::Subscriber sub_speech_recognition_;
+
+    // Knowledge client
+    psi::Client* client_reasoner_;
 
 	// Reponse user
 	std::string answer_;
@@ -110,6 +143,14 @@ public:
     std::string getSentence(std::vector<std::string> possible_text);
 private:
     bool iExplainedLights;
+    bool find_me;
+    bool find_from;
+    bool find_to;
+    bool find_exit;
+    bool find_at;
+    std::vector<std::string> action_heard;
+    std::vector<bool> action_heard_keywords;
+    std::vector<std::string> action_steps;
 
     ros::Publisher pub_amigo_speech_sim_; // For using amigo's speech in simulation
 };

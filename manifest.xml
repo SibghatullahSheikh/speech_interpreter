@@ -14,6 +14,10 @@
   <depend package="amigo_msgs"/>
   <depend package="roslib"/>
 
+  <depend package="psi"/>
+
+  <depend package="tue_pocketsphinx"/>
+
   <!-- dependent on text_to_speech so that amigo can talk with you -->
   <depend package="text_to_speech_philips"/>
 

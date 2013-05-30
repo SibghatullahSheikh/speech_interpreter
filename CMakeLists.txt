@@ -33,7 +33,4 @@ rosbuild_gensrv()
 file(GLOB_RECURSE HEADER_FILES include/*.h)
 
 rosbuild_add_executable(interpreter src/speech_interpreter.cpp src/Interpreter.cpp ${HEADER_FILES})
-rosbuild_add_executable(silent_interpreter src/speech_interpreter.cpp src/Silent_Interpreter.cpp)
-rosbuild_add_executable(interpreter_tue_test_lab src/speech_interpreter.cpp src/Interpreter_tue_test_lab.cpp)
-rosbuild_add_executable(interpreter_magdeburg2013 src/speech_interpreter.cpp src/Interpreter_magdeburg2013.cpp)
-rosbuild_add_executable(interpreter_magdeburg2013_v2 src/speech_interpreter.cpp src/Interpreter_magdeburg2013_v2.cpp)
+
