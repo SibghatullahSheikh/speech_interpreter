@@ -7,7 +7,7 @@
     <arg name="machine" value="$(optenv MACHINE_SPEECH_TO_TEXT localhost)"/>
     <include file="$(find amigo_machine_files)/machines/$(arg machine).machine" />
 
-    <node pkg="speech_interpreter" type="interpreter" args="$(arg args)" respawn="false" name="interpreter" output="screen" machine="($arg machine)" >
+    <node pkg="speech_interpreter" type="interpreter" args="$(arg args)" respawn="false" name="interpreter" output="screen" machine="$(arg machine)" >
 
     </node>
 
