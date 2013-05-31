@@ -10,7 +10,7 @@
 
 #include "std_srvs/Empty.h"
 
-#include <text_to_speech_philips/amigo_speakup_advanced.h>
+#include <text_to_speech_philips/Speak.h>
 
 #include <iostream>
 #include <fstream>
@@ -23,9 +23,6 @@ using std::cout;
 #include <amigo_msgs/RGBLightCommand.h>
 
 #include <vector>
-
-ros::ServiceClient pub_speech_;
-//ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter", 1000);
 
 namespace SpeechInterpreter {
 
@@ -53,7 +50,7 @@ Interpreter::Interpreter() : answer_("") {
     // new generic service
     ask_user_service_  = nh.advertiseService("ask_user", &Interpreter::askUser, this);
 
-    pub_speech_ =  nh.serviceClient<text_to_speech_philips::amigo_speakup_advanced>("/amigo_speakup_advanced");
+    client_speech_ =  nh.serviceClient<text_to_speech_philips::Speak>("/text_to_speech/speak");
 
     pub_amigo_speech_sim_ = nh.advertise<std_msgs::String>("/amigo_speech_sim", 10); // For using amigo's speech in simulation
 
@@ -1926,7 +1923,7 @@ void Interpreter::amigoSpeak(std::string txt) {
    if(ros::param::has("/text_to_speech"))
         {
             ROS_INFO("%s", txt.c_str());
-            text_to_speech_philips::amigo_speakup_advanced speak;
+            text_to_speech_philips::Speak speak;
 
             // Also send the text over a topic (for simulation purposes, ask Sjoerd)
             std_msgs::String msg_txt;
@@ -1938,7 +1935,8 @@ void Interpreter::amigoSpeak(std::string txt) {
             speak.request.character = "kyle";
             speak.request.voice = "default";
             speak.request.emotion = "excited";
-            pub_speech_.call(speak);
+            speak.request.blocking_call = true;
+            client_speech_.call(speak);
         }
     else
         {

@@ -139,6 +139,8 @@ public:
 
     ros::Publisher set_rgb_lights_;
 
+    ros::ServiceClient client_speech_;
+
     //std::string getSentence(std::string possible_sentences[]);
     std::string getSentence(std::vector<std::string> possible_text);
 private:
