@@ -140,46 +140,47 @@ bool Interpreter::askUser(speech_interpreter::AskUser::Request  &req, speech_int
 bool Interpreter::getInfoSrv(speech_interpreter::GetInfo::Request  &req, speech_interpreter::GetInfo::Response &res) {
     std::map<std::string, std::string> answer;
     getInfo(req.type, ros::Duration(req.time_out), req.n_tries, answer);
-    answer["answer"] = answer["answer"];
+    res.answer = answer["answer"];
     return true;
 }
 
 bool Interpreter::getActionSrv(speech_interpreter::GetAction::Request  &req, speech_interpreter::GetAction::Response &res) {
     std::map<std::string, std::string> answer;
     getAction(ros::Duration(req.time_out), 1, answer);
-    answer["action"] = answer["action"];
+    
+    res.action = answer["action"];
     res.end_location = answer["end_location"];
-    answer["object"] = answer["object"];
-    answer["object_location"] = answer["object_location"];
-    answer["object_room"] = answer["object_room"];
+    res.object = answer["object"];
+    res.object_location = answer["object_location"];
+    res.object_room = answer["object_room"];
     return true;
 }
 
 bool Interpreter::getContinueSrv(speech_interpreter::GetContinue::Request  &req, speech_interpreter::GetContinue::Response &res) {
     std::map<std::string, std::string> answer;
     getContinue(ros::Duration(req.time_out), req.n_tries_max, answer);
-    answer["answer"] = answer["answer"];
+    res.answer = answer["answer"];
     return true;
 }
 
 bool Interpreter::getYesNoSrv(speech_interpreter::GetYesNo::Request  &req, speech_interpreter::GetYesNo::Response &res) {
     std::map<std::string, std::string> answer;
     getYesNo(ros::Duration(req.time_out), req.n_tries_max, answer);
-    answer["answer"] = answer["answer"];
+    res.answer = answer["answer"];
     return true;
 }
 
 bool Interpreter::getCleanupSrv(speech_interpreter::GetCleanup::Request  &req, speech_interpreter::GetCleanup::Response &res) {
     std::map<std::string, std::string> answer;
     getCleanup(ros::Duration(req.time_out), req.n_tries_max, answer);
-    answer["answer"] = answer["answer"];
+    res.answer = answer["answer"];
     return true;
 }
 
 bool Interpreter::getOpenChallengeSrv(speech_interpreter::GetOpenChallenge::Request  &req, speech_interpreter::GetOpenChallenge::Response &res) {
     std::map<std::string, std::string> answer;
     getOpenChallenge(ros::Duration(req.time_out), req.n_tries_max, answer);
-    answer["answer"] = answer["answer"];
+    res.answer = answer["answer"];
     return true;
 }
 
