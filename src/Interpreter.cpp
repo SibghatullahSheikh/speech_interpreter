@@ -1181,8 +1181,8 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
             // Explain lights during questioning:
             // Red: Amigo talks
             // Green: Questioner talks
-            setColor(1,0,0); // color red
-            std::string explaining_txt = "Before I ask you what drink you would like, I just want to tell you that if my lights are red during questioning, I will do the word and when my lights are green during questioning, you can talk.";
+            setColor(1,0,0); // color reds
+            std::string explaining_txt = "Before I ask you which room you would like me to clean, I just want to tell you that if my lights are red during questioning, I will do the word and when my lights are green during questioning, you can talk.";
             amigoSpeak(explaining_txt);
 
             iExplainedLights = true;
