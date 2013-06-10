@@ -1343,7 +1343,10 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                     }
                     result = "wrong_answer";
                     std::vector<std::string> possible_text;
-                    if ((n_tries + 1) == n_tries_max) {
+                    if (n_tries_before_deeper_questioning == 2) {
+                        ROS_DEBUG("Continue to smaller questions to get to the right action");
+                    }
+                    else if ((n_tries + 1) == n_tries_max) {
                         possible_text.push_back("I was not able to understand what you were saying for a longer time, I'm sorry.");
                         possible_text.push_back("I'm sorry, I was not able to understand what you were saying for a longer time.");
                     }
