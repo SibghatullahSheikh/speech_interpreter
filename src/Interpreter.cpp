@@ -533,7 +533,7 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                         ++n_tries;
                     }
                     else {
-                        while (ros::Time::now().toSec() - t_start < (max_duration.toSec() - (ros::Time::now().toSec() - t_start))) {
+                        while ((ros::Time::now().toSec() - t_start < (max_duration.toSec() - (ros::Time::now().toSec() - t_start))) && ros::ok()) {
 
                             // Check if the response starts with a vowel    // Check action type that is requested, first determine if action is bring/navigate/go and which category the action then is.
                             if (getPosString(action,"bring ") != -1){
@@ -561,7 +561,7 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                             std::string starting_txt = "Are you aware of the room in which I can find " + art + response;
                             amigoSpeak(starting_txt);
 
-                            while (n_tries < 5) {
+                            while (n_tries < 5 && ros::ok()) {
                                 if (waitForAnswer("yesno", 10.0)) {
                                     setColor(1,0,0); // color red
                                     // Check if answer is confirmed
@@ -615,7 +615,7 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                                                     ++n_tries;
                                                 }
                                                 else {
-                                                    while (ros::Time::now().toSec() - t_start < (max_duration.toSec() - (ros::Time::now().toSec() - t_start))) {
+                                                    while ((ros::Time::now().toSec() - t_start < (max_duration.toSec() - (ros::Time::now().toSec() - t_start)))  && ros::ok()) {
 
                                                         // Check if the response starts with a vowel
                                                         std::string vowels = "auioe";
@@ -625,7 +625,7 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                                                         std::string starting_txt = "Are you aware of the room in which I can find " + art + response;
                                                         amigoSpeak(starting_txt);
 
-                                                        while (n_tries < 5) {
+                                                        while (n_tries < 5 && ros::ok()) {
                                                             if (waitForAnswer("yesno", 10.0)) {
                                                                 setColor(1,0,0); // color red
                                                                 // Check if answer is confirmed
@@ -723,7 +723,7 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                                                             bool object_location_known = false;
                                                             std::string response_object_location = "empty";
 
-                                                            while (n_tries < 5) {
+                                                            while (n_tries < 5 && ros::ok()) {
                                                                 if (waitForAnswer("yesno", 10.0)) {
                                                                     setColor(1,0,0); // color red
                                                                     // Check if answer is confirmed
@@ -881,7 +881,7 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                                 bool object_location_known = false;
                                 std::string response_object_location = "empty";
 
-                                while (n_tries < 5) {
+                                while (n_tries < 5 && ros::ok()) {
                                     if (waitForAnswer("yesno", 10.0)) {
                                         setColor(1,0,0); // color red
                                         // Check if answer is confirmed
@@ -996,6 +996,7 @@ void Interpreter::speechCallback(std_msgs::String res) {
 	if (res.data != "empty") {
 		answer_ = res.data;
 		std::transform(answer_.begin(), answer_.end(), answer_.begin(), ::tolower);
+        answer_received_ = true;
 		ROS_DEBUG("Received response: %s", res.data.c_str());
 	}
 }
@@ -1029,6 +1030,7 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
 
     psi::BindingSet& resp_config_set = resp_config[0];
 
+    // create service request
     tue_pocketsphinx::Switch::Request req_start;
     req_start.action = tue_pocketsphinx::Switch::Request::START;
     req_start.dictionary = resp_config_set.get("DIC").toString();
@@ -1042,28 +1044,42 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
 
     tue_pocketsphinx::Switch::Response resp_start;
 
-    if (client_speech_recognition_.call(req_start, resp_start)) {
-        if (resp_start.error_msg == "") {
-            ROS_INFO("Switched on speech recognition for: %s", category.c_str());
-            setColor(0,1,0); // color green
-        } else {
-            ROS_WARN("Unable to turn on speech recognition for %s: %s", category.c_str(), resp_start.error_msg.c_str());
-        }
-    } else {
-        ROS_WARN("Service call for turning on speech recognition for %s failed", category.c_str());
-    }
-
 	answer_.clear();
-	double start_time = ros::Time::now().toSec();
+
 	ros::Rate r(10);
-    while (answer_.empty() || (answer_== " ")|| (answer_== "  ") || (answer_== "   ")) {
-		if (ros::Time::now().toSec() - start_time > t_max) {
-			ROS_WARN("Timeout: No input over speech topic %s for %f seconds", category.c_str(), t_max);
-			break;
-		}
-		ros::spinOnce();
-		r.sleep();
-	}
+
+    // loop until we have a valid answer
+    while ((answer_.empty() || (answer_== " ")|| (answer_== "  ") || (answer_== "   ")) && ros::ok()) {
+
+        // start speech recognition
+        if (client_speech_recognition_.call(req_start, resp_start)) {
+            if (resp_start.error_msg == "") {
+                ROS_INFO("Switched on speech recognition for: %s\n hmm = %s\nlm = %s\ndic = %s\nfsg = %s",
+                         category.c_str(), req_start.hidden_markov_model.c_str(), req_start.dictionary.c_str(),
+                         req_start.dictionary.c_str(), req_start.finite_state_grammer.c_str());
+                setColor(0,1,0); // color green
+            } else {
+                ROS_WARN("Unable to turn on speech recognition for %s: %s", category.c_str(), resp_start.error_msg.c_str());
+            }
+        } else {
+            ROS_WARN("Service call for turning on speech recognition for %s failed", category.c_str());
+        }
+
+        answer_received_ = false;
+        double start_time = ros::Time::now().toSec();
+
+        // wait until we received an answer from speech recognition
+        while(!answer_received_ && ros::ok()) {
+            if (ros::Time::now().toSec() - start_time > t_max) {
+                ROS_WARN("Timeout: No input over speech topic %s for %f seconds", category.c_str(), t_max);
+                break;
+            }
+            ros::spinOnce();
+            r.sleep();
+        }
+
+        r.sleep();
+    }
 
     // If input is more than one word -> only pick the first word:
     if (answer_.size() > 2 && ! (category == "sentences")) {
@@ -1100,12 +1116,12 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
     tue_pocketsphinx::Switch::Response resp_stop;
     if (client_speech_recognition_.call(req_stop, resp_stop)) {
         if (resp_stop.error_msg == "") {
-            ROS_INFO("Switched off speech recognition");
+            ROS_INFO("Switched off speech recognition for: %s", category.c_str());
         } else {
             ROS_WARN("Unable to turn off speech recognition: %s", resp_stop.error_msg.c_str());
         }
     } else {
-        ROS_WARN("Unable to turn off speech recognition");
+        ROS_WARN("Unable to turn off speech recognition for: %s", category.c_str());
     }
 
 	return (!answer_.empty());
@@ -1211,7 +1227,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
     // Ask
     amigoSpeak(starting_txt);
     ROS_DEBUG("Max time to wait for answer = %f", t_max_question);
-    while (ros::Time::now().toSec() - t_start < time_out && n_tries < n_tries_max) {
+    while ((ros::Time::now().toSec() - t_start < time_out && n_tries < n_tries_max)  && ros::ok()) {
 
         if ((type == "sentences") && (n_tries_before_deeper_questioning == 2)) {
             result = "wrong action heard";
@@ -1505,7 +1521,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
     amigoSpeak("I was still not able to understand you correctly. I will try to get the action with smaller steps.");
 
     ROS_DEBUG("Max time to wait for answer = %f", t_max_question);
-    while (ros::Time::now().toSec() - t_start < time_out) {
+    while ((ros::Time::now().toSec() - t_start < time_out) && ros::ok()) {
 
 
     //            action_heard_keywords.push_back(find_me);
@@ -1569,7 +1585,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
         //           Step 2: determine correct action          //
         /////////////////////////////////////////////////////////
 
-        while (action_steps.empty()) {
+        while (action_steps.empty() && ros::ok()) {
             no_answer = false;
             // If action_1 and action_2 are the same:
             if (action_1 == action_2) {
@@ -1743,7 +1759,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
             amigoSpeak("Do you know where I should get the object from?");
             answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
             if (answer_yes_no == "yes") {
-                while (answer_location_exact_from == "empty") {
+                while (answer_location_exact_from == "empty" && ros::ok()) {
                     // determine location category
                     answer_location_class = askUser("location_classes", 10, time_out - (ros::Time::now().toSec() - t_start));
 
@@ -1812,7 +1828,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                 amigoSpeak("Do you already know where the object is located?");
                 answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
                 if (answer_yes_no == "yes") {
-                    while (answer_location_exact_from == "empty") {
+                    while (answer_location_exact_from == "empty" && ros::ok()) {
                         // determine location category
                         answer_location_class = askUser("location_classes", 10, time_out - (ros::Time::now().toSec() - t_start));
 
@@ -1977,7 +1993,7 @@ int Interpreter::getLineNumber(std::string text_at_line, std::string category) {
 
     if (myfile.is_open())
         {
-            while (! myfile.eof() && ! (line == text_at_line))
+            while (! myfile.eof() && ! (line == text_at_line) && ros::ok())
             {
                 getline (myfile,line);
                 i++;
@@ -2019,7 +2035,7 @@ std::string Interpreter::getTextWithSpaces(int number, std::string category) {
 
     if (myfile.is_open())
         {
-            while (! myfile.eof() && ! (i == number))
+            while (! myfile.eof() && ! (i == number) && ros::ok())
             {
                 getline (myfile,line);
                 i++;
@@ -2055,7 +2071,7 @@ bool Interpreter::getContinue(const ros::Duration& max_duration, unsigned int ma
 
     ROS_INFO("I will try to receive continue %d tries and time out of %f", max_num_tries, max_duration.toSec());
 
-    while (n_tries < max_num_tries) {
+    while (n_tries < max_num_tries && ros::ok()) {
 
         if (waitForAnswer("continue", t_max_question)) {
             setColor(1,0,0); // color red
@@ -2105,12 +2121,12 @@ bool Interpreter::getYesNo(const ros::Duration& max_duration, unsigned int max_n
 
     ROS_INFO("I will try to receive yes no %d tries and time out of %f", max_num_tries, max_duration.toSec());
 
-    while (n_tries < max_num_tries) {
+    while (n_tries < max_num_tries  && ros::ok()) {
         if (waitForAnswer("yesno", t_max_question)) {
 			if (answer_ == "yes" || answer_ == "y") {
 				setColor(1,0,0); // color red
                 amigoSpeak("I heard yes, is that corect?"); //Amigo's output with "corect?" is better than "correct?"
-                while (n_tries < max_num_tries) {
+                while (n_tries < max_num_tries && ros::ok()) {
                     if (waitForAnswer("yesno", t_max_question)){
                         if (answer_ == "yes" || answer_ == "y") {
                             std::vector<std::string> possible_text;
@@ -2191,7 +2207,7 @@ bool Interpreter::getYesNo(const ros::Duration& max_duration, unsigned int max_n
                 }
                 else {
                     amigoSpeak("I heard no, is that corect?"); //Amigo's output with "corect?" is better than "correct?"
-                    while (n_tries < max_num_tries) {
+                    while (n_tries < max_num_tries && ros::ok()) {
 						if (waitForAnswer("yesno", t_max_question)){
 							if (answer_ == "yes" || answer_ == "y") {
                                 std::vector<std::string> possible_text;
@@ -2305,13 +2321,13 @@ std::string Interpreter::getYesNoFunc(bool confirmation, const double n_tries_ma
 
     ROS_INFO("I will try to receive yes no %d tries and time out of %f", n_tries_max, time_out);
 
-    while (n_tries < n_tries_max) {
+    while (n_tries < n_tries_max  && ros::ok()) {
         if (waitForAnswer("yesno", t_max_question)) {
             if (answer_ == "yes" || answer_ == "y") {
                 if (confirmation) {
                     setColor(1,0,0); // color red
                     amigoSpeak("I heard yes, is that corect?"); //Amigo's output with "corect?" is better than "correct?"
-                    while (n_tries < n_tries_max) {
+                    while (n_tries < n_tries_max && ros::ok()) {
                         if (waitForAnswer("yesno", t_max_question)){
                             if (answer_ == "yes" || answer_ == "y") {
                                 std::vector<std::string> possible_text;
@@ -2403,7 +2419,7 @@ std::string Interpreter::getYesNoFunc(bool confirmation, const double n_tries_ma
                 else {
                     if (confirmation) {
                         amigoSpeak("I heard no, is that corect?"); //Amigo's output with "corect?" is better than "correct?"
-                        while (n_tries < n_tries_max) {
+                        while (n_tries < n_tries_max && ros::ok()) {
                             if (waitForAnswer("yesno", t_max_question)){
                                 if (answer_ == "yes" || answer_ == "y") {
                                     std::vector<std::string> possible_text;
@@ -2597,7 +2613,7 @@ bool Interpreter::getOpenChallenge(const ros::Duration& max_duration, unsigned i
 int Interpreter::getPosString(std::string input_text, std::string found_text) {
 
     int pos = -1;
-    while(true) {
+    while(true && ros::ok()) {
         pos =  input_text.find(found_text, ++pos);
         if (pos != std::string::npos) {
             ROS_DEBUG("Found word '%s' at position = %i", found_text.c_str(), pos);
