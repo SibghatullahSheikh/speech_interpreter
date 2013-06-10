@@ -135,6 +135,7 @@ public:
     psi::Client* client_reasoner_;
 
 	// Reponse user
+    bool answer_received_;
 	std::string answer_;
 
     ros::Publisher set_rgb_lights_;
