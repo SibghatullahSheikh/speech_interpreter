@@ -295,6 +295,14 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
         answer["end_location"]    = action_steps[1];
         answer["object"]          = action_steps[2];
         answer["object_location"] = action_steps[3];
+        if (answer["object"] != "empty") {
+            if (answer["object_room"] == "empty" ) {
+                answer["object_room"] = "room_not_known";
+            }
+            if (answer["object_location"] == "empty") {
+                answer["object_location"] = "location_not_known";
+            }
+        }
         if (answer["end_location"] == "empty") {
             answer["end_location"] = "meeting_point";
         }
