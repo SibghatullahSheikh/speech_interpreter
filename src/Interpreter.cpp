@@ -1214,11 +1214,9 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 
             iExplainedLights = true;
         }
-        type = "room";
+        type = "cleanup";
         std::vector<std::string> possible_text;
-        possible_text.push_back("Could you please tell me which room you like me to clean?");
-        possible_text.push_back("What room would you like me to clean?");
-        possible_text.push_back("Which room can I clean for you?");
+        possible_text.push_back("What can I do for you?");
         starting_txt = getSentence(possible_text);
 
     } else if (type == "location_classes"){
@@ -1254,10 +1252,6 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
             std::string result2;
 
             if ( type == "sentences") {
-                //line_number = getLineNumber(answer_, "action");
-                //result2 = getTextWithSpaces(line_number, "action");
-
-                //amigoSpeak("I heard " + result2);
                 amigoSpeak("Did you want me to " + result);
                 std::vector<std::string> possible_text;
                 possible_text.push_back("Is that corect?"); //Amigo's output with "corect?" is better than "correct?"
@@ -1269,10 +1263,13 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 amigoSpeak(sentence);
             }
             else if ( type == "cleanup") {
-                line_number = getLineNumber(answer_, "cleanup");
-                result2 = getTextWithSpaces(line_number, "cleanup");
 
-                amigoSpeak("I heard " + result2);
+                unsigned found1=result.find("cleanupthe");
+                unsigned found2=result.find(" ");
+                std::string part = result.substr((found1+10),found2);
+                result = part;
+
+                amigoSpeak("I heard clean up the " + result);
                 std::vector<std::string> possible_text;
                 possible_text.push_back("Is that corect?"); //Amigo's output with "corect?" is better than "correct?"
                 possible_text.push_back("Am I right?");
