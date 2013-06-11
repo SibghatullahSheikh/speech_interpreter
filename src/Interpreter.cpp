@@ -1542,7 +1542,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
 
         // Action 1:
         if (getPosString(action_heard[0],"bring") != -1){
-            if (action_heard_keywords[0]) {
+            if (action_heard_keywords[0]) {  // =  find_me of action1
                 action_1 = "get";
             }
             else {
@@ -1562,10 +1562,10 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
         }
         ROS_INFO("first action class = %s",action_1.c_str());
 
-        // Action 1:
+        // Action 2:
 
         if (getPosString(action_heard[1],"bring") != -1){
-            if (action_heard_keywords[5]) {
+            if (action_heard_keywords[5]) { // =  find_me of action2
                 action_2 = "get";
             }
             else {
@@ -1638,7 +1638,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
 
                 answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
                 if (answer_yes_no == "yes") {
-                    action_steps.push_back(action_1);
+                    action_steps.push_back(action_2);
                     break;
                 }
                 else if (answer_yes_no == "no_answer") {
@@ -1779,6 +1779,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
             // for action transport, determine dropoff location
             if (action_steps[0] == "transport") {
                 // determine location category
+                amigoSpeak("I wonder where I should bring the object to.");  // TODO: TESTEN!
                 answer_location_class = askUser("location_classes", 10, time_out - (ros::Time::now().toSec() - t_start));
 
                 if (answer_location_class == "exit") {
@@ -1863,8 +1864,8 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
             }
         }
 
-        action_steps.push_back(answer_object_exact);
         action_steps.push_back(answer_location_exact_to);
+        action_steps.push_back(answer_object_exact);
         action_steps.push_back(answer_location_exact_from);
 
 
