@@ -1342,24 +1342,25 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                         }
                     }
                     result = "wrong_answer";
-                    std::vector<std::string> possible_text;
-                    if (n_tries_before_deeper_questioning == 2) {
-                        ROS_DEBUG("Continue to smaller questions to get to the right action");
+
+                    if (n_tries_before_deeper_questioning != 2) {
+                        std::vector<std::string> possible_text;
+                        //ROS_DEBUG("Continue to smaller questions to get to the right action");
+                        if ((n_tries + 1) == n_tries_max) {
+                            possible_text.push_back("I was not able to understand what you were saying for a longer time, I'm sorry.");
+                            possible_text.push_back("I'm sorry, I was not able to understand what you were saying for a longer time.");
+                        }
+                        else {
+                            possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
+                            possible_text.push_back("Apparently I mis understood, I'm sorry, could you please repeat it");
+                            possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
+                            possible_text.push_back("I was wrong, I'm sorry, could you please repeat it");
+                            possible_text.push_back("Maybe there is something wrong with my ears, I'm sorry, could you please repeat it");
+                        }
+                        std::string sentence;
+                        sentence = getSentence(possible_text);
+                        amigoSpeak(sentence);
                     }
-                    else if ((n_tries + 1) == n_tries_max) {
-                        possible_text.push_back("I was not able to understand what you were saying for a longer time, I'm sorry.");
-                        possible_text.push_back("I'm sorry, I was not able to understand what you were saying for a longer time.");
-                    }
-                    else {
-                        possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
-                        possible_text.push_back("Apparently I mis understood, I'm sorry, could you please repeat it");
-                        possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
-                        possible_text.push_back("I was wrong, I'm sorry, could you please repeat it");
-                        possible_text.push_back("Maybe there is something wrong with my ears, I'm sorry, could you please repeat it");
-                    }
-                    std::string sentence;
-                    sentence = getSentence(possible_text);
-                    amigoSpeak(sentence);
                     ++n_tries;
 				}
 			}
@@ -1415,25 +1416,25 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                             }
                         }
 						result = "wrong_answer";
-                        std::vector<std::string> possible_text;
-                        if (n_tries_before_deeper_questioning == 2) {
-                            ROS_DEBUG("Continue to smaller questions to get to the right action");
+                        if (n_tries_before_deeper_questioning != 2) {
+                            std::vector<std::string> possible_text;
+                            //ROS_DEBUG("Continue to smaller questions to get to the right action");
+                            if ((n_tries + 1) == n_tries_max) {
+                                possible_text.push_back("I was not able to understand what you were saying for a longer time, I'm sorry.");
+                                possible_text.push_back("I'm sorry, I was not able to understand what you were saying for a longer time.");
+                            }
+                            else {
+                                possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
+                                possible_text.push_back("Apparently I mis understood, I'm sorry, could you please repeat it");
+                                possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
+                                possible_text.push_back("I was wrong, I'm sorry, could you please repeat it");
+                                possible_text.push_back("Maybe there is something wrong with my ears, I'm sorry, could you please repeat it");
+                            }
+                            std::string sentence;
+                            sentence = getSentence(possible_text);
+                            amigoSpeak(sentence);
                         }
-                        else if ((n_tries + 1) == n_tries_max) {
-                            possible_text.push_back("I was not able to understand what you were saying for a longer time.");
-                            possible_text.push_back("I'm sorry, I was not able to understand what you were saying for a longer time.");
-                        }
-                        else {
-                            possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
-                            possible_text.push_back("Apparently I mis understood, I'm sorry, could you please repeat it");
-                            possible_text.push_back("I understood that it is not correct, lets try it again. Could you please repeat it");
-                            possible_text.push_back("I was wrong, I'm sorry, could you please repeat it");
-                            possible_text.push_back("Maybe there is something wrong with my ears, I'm sorry, could you please repeat it");
-                        }
-                        std::string sentence;
-                        sentence = getSentence(possible_text);
-                        amigoSpeak(sentence);
-						++n_tries;
+                        ++n_tries;
 					}
 				}
 
