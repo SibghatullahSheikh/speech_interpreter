@@ -150,6 +150,7 @@ bool Interpreter::getActionSrv(speech_interpreter::GetAction::Request  &req, spe
     res.object = answer["object"];
     res.object_location = answer["object_location"];
     res.object_room = answer["object_room"];
+    res.start_location = answer["start_location"];
     return true;
 }
 
