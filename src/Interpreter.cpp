@@ -306,6 +306,7 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
         if (answer["end_location"] == "empty") {
             answer["end_location"] = "meeting_point";
         }
+        setColor(0,0,1); // color blue
         return true;
     }
 
@@ -1089,6 +1090,7 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
 
         r.sleep();
     }
+    setColor(1,0,0); // color red
 
     // If input is more than one word -> only pick the first word:
     if (answer_.size() > 2 && ! (category == "sentences")) {
@@ -1618,6 +1620,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                     amigoSpeak("My guess is that you want me to navigate to a location, is that corect?");
                 }
                 answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
+                setColor(1,0,0);
                 if (answer_yes_no == "yes") {
                     action_steps.push_back(action_1);
                     break;
@@ -1647,6 +1650,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                 }
 
                 answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
+                setColor(1,0,0);
                 if (answer_yes_no == "yes") {
                     action_steps.push_back(action_2);
                     break;
@@ -1673,6 +1677,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                     }
 
                     answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
+                    setColor(1,0,0);
                     if (answer_yes_no == "yes") {
                         action_steps.push_back(action_1);
                         break;
@@ -1689,6 +1694,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                 if (!(action_1 == "get") && !(action_2 == "get")) {
                     amigoSpeak("Should I get you something?");
                     answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
+                    setColor(1,0,0);
                     if (answer_yes_no == "yes") {
                         action_steps.push_back("get");
                         break;
@@ -1702,6 +1708,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                 if (!(action_1 == "transport") && !(action_2 == "transport")) {
                     amigoSpeak("Should I transport an object?");
                     answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
+                    setColor(1,0,0);
                     if (answer_yes_no == "yes") {
                         action_steps.push_back("transport");
                         break;
@@ -1715,6 +1722,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                 if (!(action_1 == "point") && !(action_2 == "point")) {
                     amigoSpeak("Should I point at at a location or object?");
                     answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
+                    setColor(1,0,0);
                     if (answer_yes_no == "yes") {
                         action_steps.push_back("point");
                         break;
@@ -1728,6 +1736,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                 if  (!(action_1 == "find") && !(action_2 == "find")) {
                     amigoSpeak("Should I find a location or an object, yes or no?");
                     answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
+                    setColor(1,0,0);
                     if (answer_yes_no == "yes") {
                         action_steps.push_back("find");
                         break;
@@ -1741,6 +1750,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                 if  (!(action_1 == "navigate") && !(action_2 == "navigate")) {
                     amigoSpeak("Should I navigate to a location?");
                     answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
+                    setColor(1,0,0);
                     if (answer_yes_no == "yes") {
                         action_steps.push_back("navigate");
                         break;
@@ -1771,6 +1781,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
             // check if object should be grabbed from a certain location
             amigoSpeak("Do you know where I should get the object from?");
             answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
+            setColor(1,0,0);
             if (answer_yes_no == "yes") {
                 while (answer_location_exact_from == "empty" && ros::ok()) {
                     // determine location category
@@ -1785,11 +1796,14 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                     }
                 }
             }
+            else if (answer_yes_no == "no") {
+                amigoSpeak("I will try to find the object myself.");
+            }
 
             // for action transport, determine dropoff location
             if (action_steps[0] == "transport") {
                 // determine location category
-                amigoSpeak("I wonder where I should bring the object to.");  // TODO: TESTEN!
+                amigoSpeak("I wonder where I should bring the object to.");
                 answer_location_class = askUser("location_classes", 10, time_out - (ros::Time::now().toSec() - t_start));
 
                 if (answer_location_class == "exit") {
@@ -1841,6 +1855,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                 // check if object should be grabbed from a certain location
                 amigoSpeak("Do you already know where the object is located?");
                 answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
+                setColor(1,0,0);
                 if (answer_yes_no == "yes") {
                     while (answer_location_exact_from == "empty" && ros::ok()) {
                         // determine location category
@@ -1854,6 +1869,9 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                             answer_location_exact_from = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
                         }
                     }
+                }
+                else if (answer_yes_no == "no") {
+                    amigoSpeak("I will try to find the object myself.");
                 }
             }
         }
