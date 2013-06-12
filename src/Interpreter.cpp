@@ -311,6 +311,8 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
             answer["end_location"] = "meeting_point";
         }
         setColor(0,0,1); // color blue
+        action_heard.clear();
+        action_heard_keywords.clear();
         return true;
     }
 
@@ -445,6 +447,8 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
         find_exit = false;
         find_at = false;
         setColor(0,0,1); // color blue
+        action_heard.clear();
+        action_heard_keywords.clear();
 		return true;
 	}
 
@@ -998,6 +1002,8 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
     find_exit = false;
     find_at = false;
     setColor(0,0,1); // color blue
+    action_heard.clear();
+    action_heard_keywords.clear();
 	return true;
 }
 
@@ -1561,6 +1567,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
         std::string action_2 = "empty";
 
         // Action 1:
+
         if (getPosString(action_heard[0],"bring") != -1){
             if (action_heard_keywords[0]) {  // =  find_me of action1
                 action_1 = "get";
@@ -2248,7 +2255,7 @@ bool Interpreter::getYesNo(const ros::Duration& max_duration, unsigned int max_n
                 else {
                     amigoSpeak("I heard no, is that corect?"); //Amigo's output with "corect?" is better than "correct?"
                     while (n_tries < max_num_tries && ros::ok()) {
-						if (waitForAnswer("yesno", t_max_question)){
+                        if (waitForAnswer("yesno", t_max_question)){
 							if (answer_ == "yes" || answer_ == "y") {
                                 std::vector<std::string> possible_text;
                                 possible_text.push_back("Certainly");
