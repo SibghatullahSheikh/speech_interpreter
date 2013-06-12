@@ -1212,7 +1212,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
             /*std::string explaining_txt = "Before I ask you which room you would like me to clean, I just want to tell you that if my"
 						"lights are red during questioning, I will do the word and when my lights are green during questioning, you can talk.";
 			*/		
-			std::string explaining_txt = "Would you please answer the question when I become green."
+			std::string explaining_txt = "Would you please answer the question when I become green.";
             amigoSpeak(explaining_txt);
 
             iExplainedLights = true;
