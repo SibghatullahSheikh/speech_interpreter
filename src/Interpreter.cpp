@@ -210,6 +210,10 @@ bool Interpreter::getInfo(const std::string& type, const ros::Duration& max_dura
         ROS_INFO("I will get you what you want on your sandwich in %d tries and time out of %f", max_num_tries, max_duration.toSec());
 
     }
+    else if (type_lower == "name_maxima") {
+        ROS_INFO("I will get you your name in %d tries and time out of %f", max_num_tries, max_duration.toSec());
+
+    }
     else {
 
 		// Iterate over categories and determine if it is present
@@ -1245,6 +1249,12 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
     } else if (type == "object_or_location"){
         ROS_DEBUG("No starting text for object_or_location");
 
+    } else if (type == "name_maxima"){
+        std::vector<std::string> possible_text;
+        possible_text.push_back("Could you please tell me your name?");
+        possible_text.push_back("Can you give me your name?");
+        possible_text.push_back("What is your name?");
+        starting_txt = getSentence(possible_text);
     } else {
 		std::string art = (start_with_vowel)?"an ":"a ";
         starting_txt = "Can you specify which " + type + " you mean?";
