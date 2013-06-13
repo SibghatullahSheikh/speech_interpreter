@@ -1072,6 +1072,8 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
 
 	ros::Rate r(10);
 
+    double start_time = ros::Time::now().toSec();
+
     // loop until we have a valid answer
     while ((answer_.empty() || (answer_== " ")|| (answer_== "  ") || (answer_== "   ")) && ros::ok()) {
 
@@ -1090,7 +1092,6 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
         }
 
         answer_received_ = false;
-        double start_time = ros::Time::now().toSec();
 
         // wait until we received an answer from speech recognition
         while(!answer_received_ && ros::ok()) {
@@ -1101,7 +1102,7 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
             ros::spinOnce();
             r.sleep();
         }
-
+        break;
         r.sleep();
     }
     setColor(1,0,0); // color red
