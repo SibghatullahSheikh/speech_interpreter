@@ -452,7 +452,13 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
 
     if (it_action == action_category_map_.end()) {
 		ROS_DEBUG("All information is available, no need to ask questions");
-        amigoSpeak("I know everything I need to know, I will go to an exit now");
+        if (answer["action"] == "navigate") {
+            amigoSpeak("I know everything I need to know. I will go to an exit.");
+        }
+        else if (answer["action"] == "point") {
+            amigoSpeak("I know everything I need to know. I will point at an exit");
+        }
+
         find_me = false;
         find_from = false;
         find_to = false;
@@ -1204,7 +1210,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         type = "sentences";
         starting_txt = "What can I do for you?";
         t_max_question = 300; // = 5 minutes, in e-gpsr 2013 amigo should handle waiting long time for input.
-    } else if (type == "bedroom" || type =="livingroom" || type == "kitchen" || type == "lobby") {
+    } else if (type == "bedroom" || type =="livingroom" || type == "kitchen" || type == "lobby" || type == "diningroom") {
         starting_txt = "Can you give me the exact location?";
     } else if (type == "cleanup") {
         starting_txt = "What do you want me to do";
@@ -1485,6 +1491,46 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                         sentence = getSentence(possible_text);
                         amigoSpeak(sentence);
                     }
+                    else if (type == "object_or_location" ||
+                             type == "demo_challenge_breakfast" ||
+                             type == "demo_challenge_status_person" ||
+                             type == "demo_challenge_anything_else" ||
+                             type == "kitchen" ||
+                             type == "livingroom" ||
+                             type == "bedroom" ||
+                             type == "diningroom" ||
+                             type == "object_classes" ||
+                             type == "location_classes" ||
+                             type == "name_maxima") {
+                        std::vector<std::string> possible_text;
+                        if (type == "object_or_location") {
+                            possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you tell me again if it should be an object or location?");
+                        } else if (type == "demo_challenge_breakfast") {
+                            possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you tell me again what you want for your breakfast?");
+                        } else if (type == "demo_challenge_status_person") {
+                            possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you tell me again how you feel?");
+                        } else if (type == "demo_challenge_anything_else") {
+                            possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you tell me again if I can do anything else?");
+                        } else if (type == "kitchen") {
+                            possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you give me the exact location again?");
+                        } else if (type == "livingroom") {
+                            possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you give me the exact location again?");
+                        } else if (type == "bedroom") {
+                            possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you give me the exact location again?");
+                        } else if (type == "diningroom") {
+                            possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you give me the exact location again?");
+                        } else if (type == "object_classes") {
+                            possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you give me the object class again?");
+                        } else if (type == "location_classes") {
+                            possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you give me the location class again?");
+                        } else if (type == "name_maxima") {
+                            possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you please tell what your name again?");
+                        }
+
+                        std::string sentence;
+                        sentence = getSentence(possible_text);
+                        amigoSpeak(sentence);
+                    }
                     else {
                         std::string art = (start_with_vowel)?"an ":"a ";
                         std::vector<std::string> possible_text;
@@ -1744,7 +1790,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                 }
 
                 if (!(action_1 == "point") && !(action_2 == "point")) {
-                    amigoSpeak("Should I point at at a location or object?");
+                    amigoSpeak("Should I point at at a location or object, yes or no?");
                     answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
                     setColor(1,0,0);
                     if (answer_yes_no == "yes") {
@@ -1797,10 +1843,14 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
         // for actions transport and get:
         if (action_steps[0] == "transport" || action_steps[0] == "get") {
             // determine which object category amigo should transport or get
-            answer_object_class = askUser("object_classes", 10, time_out - (ros::Time::now().toSec() - t_start));
+            while ((answer_object_exact == "empty")  && ros::ok()) {
+                answer_object_class = askUser("object_classes", 10, time_out - (ros::Time::now().toSec() - t_start));
 
-            // determine exact object to transport or get
-            answer_object_exact = askUser(answer_object_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                // determine exact object to transport or get
+                if (!(answer_object_class == "no_answer") || !(answer_object_class == "wrong_answer")) {
+                    answer_object_exact = askUser(answer_object_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                }
+            }
 
             // check if object should be grabbed from a certain location
             amigoSpeak("Do you know where I should get the object from?");
@@ -1816,7 +1866,10 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                     }
                     else {
                         // determine exact object to transport or get
-                        answer_location_exact_from = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                        if (!(answer_location_class == "no_answer") || !(answer_location_class == "wrong_answer")) {
+                            answer_location_exact_from = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                        }
+
                     }
                 }
             }
@@ -1828,20 +1881,27 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
             if (action_steps[0] == "transport") {
                 // determine location category
                 amigoSpeak("I wonder where I should bring the object to.");
-                answer_location_class = askUser("location_classes", 10, time_out - (ros::Time::now().toSec() - t_start));
 
-                if (answer_location_class == "exit") {
-                    answer_location_exact_to == "exit";
-                }
-                else {
-                    // determine exact location to transport object to
-                    answer_location_exact_to = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                while (answer_location_exact_to == "empty" && ros::ok()) {
+                    // determine location category
+                    answer_location_class = askUser("location_classes", 10, time_out - (ros::Time::now().toSec() - t_start));
+
+                    if (answer_location_class == "exit") {
+                        answer_location_exact_to == "exit";
+                    }
+                    else {
+                        // determine exact location to transport object to
+                        if (!(answer_location_class == "no_answer") || !(answer_location_class == "wrong_answer")) {
+                            answer_location_exact_to = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                        }
+
+                    }
                 }
             }
         }
 
         // for actions find and point
-        if (action_steps[0] == "point" || action_steps[0] == "find") {
+        else if (action_steps[0] == "point" || action_steps[0] == "find") {
 
             // check if location or object should be found / pointed at.
             if (action_steps[0] == "point") {
@@ -1855,26 +1915,35 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                 // Make sure action will be find (since find is implemented as going to location)
                 action_steps[0] = "find";
 
-                // determine location category
-                answer_location_class = askUser("location_classes", 10, time_out - (ros::Time::now().toSec() - t_start));
+                while (answer_location_exact_to == "empty" && ros::ok()) {
+                    // determine location category
+                    answer_location_class = askUser("location_classes", 10, time_out - (ros::Time::now().toSec() - t_start));
 
-                if (answer_location_class == "exit") {
-                    answer_location_exact_to == "exit";
-                }
-                else {
-                    // determine exact location to point at
-                    answer_location_exact_to = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                    if (answer_location_class == "exit") {
+                        answer_location_exact_to == "exit";
+                    }
+                    else {
+                        // determine exact location to point at
+                        if (!(answer_location_class == "no_answer") || !(answer_location_class == "wrong_answer")) {
+                            answer_location_exact_to = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                        }
+
+                    }
                 }
             }
             else if (answer_location_or_object == "object") {
                 // Make sure action will be point (since point is implemented as finding an object)
                 action_steps[0] = "point";
 
-                // determine object category
-                answer_object_class = askUser("object_classes", 10, time_out - (ros::Time::now().toSec() - t_start));
+                while ((answer_object_exact == "empty")  && ros::ok()) {
+                    // determine object category
+                    answer_object_class = askUser("object_classes", 10, time_out - (ros::Time::now().toSec() - t_start));
 
-                // determine exact object to transport or get
-                answer_object_exact = askUser(answer_object_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                    // determine exact object to point at
+                    if (!(answer_object_class == "no_answer") || !(answer_object_class == "wrong_answer")) {
+                        answer_object_exact = askUser(answer_object_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                    }
+                }
 
                 // check if object should be grabbed from a certain location
                 amigoSpeak("Do you already know where the object is located?");
@@ -1889,8 +1958,9 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                             amigoSpeak("I can not find an object that is on an exit, please respond with another location class");
                         }
                         else {
-                            // determine exact location
-                            answer_location_exact_from = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                            if (!(answer_location_class == "no_answer") || !(answer_location_class == "wrong_answer")) {
+                                answer_location_exact_from = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                            }
                         }
                     }
                 }
@@ -1904,15 +1974,20 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
 
             amigoSpeak("Where do you want me to go to?");
 
-            // determine location category
-            answer_location_class = askUser("location_classes", 10, time_out - (ros::Time::now().toSec() - t_start));
+            while (answer_location_exact_to == "empty" && ros::ok()) {
+                // determine location category
+                answer_location_class = askUser("location_classes", 10, time_out - (ros::Time::now().toSec() - t_start));
 
-            if (answer_location_class == "exit") {
-                answer_location_exact_to == "exit";
-            }
-            else {
-                // determine exact location to go to
-                answer_location_exact_to = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                if (answer_location_class == "exit") {
+                    answer_location_exact_to == "exit";
+                }
+                else {
+                    // determine exact location to go to
+                    if (!(answer_location_class == "no_answer") || !(answer_location_class == "wrong_answer")) {
+                        answer_location_exact_to = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                    }
+
+                }
             }
         }
 
