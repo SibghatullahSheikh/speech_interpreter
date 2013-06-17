@@ -206,7 +206,15 @@ bool Interpreter::getInfo(const std::string& type, const ros::Duration& max_dura
         ROS_INFO("I will get you a room in %d tries and time out of %f", max_num_tries, max_duration.toSec());
 
     }
-    else if (type_lower == "demo_challenge") {
+    else if (type_lower == "demo_challenge_breakfast") {
+        ROS_INFO("I will get you what you want on your sandwich in %d tries and time out of %f", max_num_tries, max_duration.toSec());
+
+    }
+    else if (type_lower == "demo_challenge_status_person") {
+        ROS_INFO("I will get you what you want on your sandwich in %d tries and time out of %f", max_num_tries, max_duration.toSec());
+
+    }
+    else if (type_lower == "demo_challenge_anything_else") {
         ROS_INFO("I will get you what you want on your sandwich in %d tries and time out of %f", max_num_tries, max_duration.toSec());
 
     }
@@ -1108,7 +1116,7 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
     setColor(1,0,0); // color red
 
     // If input is more than one word -> only pick the first word:
-    if (answer_.size() > 2 && ! (category == "sentences")) {
+    if (answer_.size() > 2 && ! (category == "sentences") && ! (category == "demo_challenge_anything_else")) {
         unsigned found=answer_.find(" ");
         std::string part = answer_.substr(0,found);
         answer_= part;
@@ -1202,7 +1210,11 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         starting_txt = "What do you want me to do";
     } else if (type == "open_challenge") {
         starting_txt = "Where do you want me to go";
-    } else if (type == "demo_challenge") {
+    } else if (type == "demo_challenge_breakfast") {
+        starting_txt = "";
+    } else if (type == "demo_challenge_status_person") {
+        starting_txt = "";
+    } else if (type == "demo_challenge_anything_else") {
         starting_txt = "";
     } else if (type == "drink_cocktail") {
         if (iExplainedLights == false) {
@@ -1321,20 +1333,6 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 sentence = getSentence(possible_text);
                 amigoSpeak(sentence);
             }
-            else if ( type == "demo_challenge") {
-                line_number = getLineNumber(answer_, "demo_challenge");
-                result2 = getTextWithSpaces(line_number, "demo_challenge");
-
-                amigoSpeak("I heard " + result2);
-                std::vector<std::string> possible_text;
-                possible_text.push_back("Is that corect?"); //Amigo's output with "corect?" is better than "correct?"
-                possible_text.push_back("Am I right?");
-                possible_text.push_back("Is that okay?");
-                possible_text.push_back("Is that alright?");
-                std::string sentence;
-                sentence = getSentence(possible_text);
-                amigoSpeak(sentence);
-            }
             else {
                 amigoSpeak("I heard " + result);
                 std::vector<std::string> possible_text;
@@ -1404,7 +1402,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 			// If no answer heard to confirmation question, ask for confirmation again
 			else {
                 setColor(1,0,0); // color red
-                if (type == "cleanup" || type == "open_challenge" || type == "demo_challenge") {
+                if (type == "cleanup" || type == "open_challenge") {
                     std::vector<std::string> possible_text;
                     possible_text.push_back("I did not hear you, did you say "+ result2);
                     possible_text.push_back("Did you say "+ result2 + ". Could you confirm that?");
@@ -1478,7 +1476,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 				else {
                     setColor(1,0,0); // color red
                     result = "no_answer";
-                    if (type == "sentences" || type == "cleanup" || type == "open_challenge" || type == "demo_challenge") {
+                    if (type == "sentences" || type == "cleanup" || type == "open_challenge") {
                         std::vector<std::string> possible_text;
                         possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you please repeat what you want me to do?");
                         possible_text.push_back("I didn't hear a confirmation, sorry. Could you please repeat what you want me to do?");
@@ -2034,9 +2032,6 @@ int Interpreter::getLineNumber(std::string text_at_line, std::string category) {
     else if (category == "open_challenge") {
         path = ros::package::getPath("speech_interpreter") + "/include/open_challenge_magdeburg2013_without_spaces.txt";
     }
-    else if (category == "demo_challenge") {
-        path = ros::package::getPath("speech_interpreter") + "/include/demo_challenge_magdeburg2013_without_spaces.txt";
-    }
 
     ifstream myfile;
     myfile.open(path.c_str());
@@ -2075,9 +2070,6 @@ std::string Interpreter::getTextWithSpaces(int number, std::string category) {
     }
     else if (category == "open_challenge") {
         path = ros::package::getPath("speech_interpreter") + "/include/open_challenge_magdeburg2013_with_spaces.txt";
-    }
-    else if (category == "demo_challenge") {
-        path = ros::package::getPath("speech_interpreter") + "/include/demo_challenge_magdeburg2013_with_spaces.txt";
     }
 
     ifstream myfile;
