@@ -1089,7 +1089,7 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
     double start_time = ros::Time::now().toSec();
 
     // loop until we have a valid answer
-    while ((answer_.empty() || (answer_== " ")|| (answer_== "  ") || (answer_== "   ")) && ros::ok()) {
+    while ((answer_.empty() || (answer_== " ")|| (answer_== "  ") || (answer_== "   ") || (answer_== "(null)")) && ros::ok()) {
 
         // start speech recognition
         if (client_speech_recognition_.call(req_start, resp_start)) {
@@ -1853,7 +1853,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
             }
 
             // check if object should be grabbed from a certain location
-            amigoSpeak("Do you know where I should get the object from?");
+            amigoSpeak("Do you know where I should get the object from, yes or no?");
             answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
             setColor(1,0,0);
             if (answer_yes_no == "yes") {
@@ -1946,7 +1946,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                 }
 
                 // check if object should be grabbed from a certain location
-                amigoSpeak("Do you already know where the object is located?");
+                amigoSpeak("Do you already know where the object is located, yes or no?");
                 answer_yes_no = getYesNoFunc(confirmation, n_tries_yesno, time_out - (ros::Time::now().toSec() - t_start));
                 setColor(1,0,0);
                 if (answer_yes_no == "yes") {
