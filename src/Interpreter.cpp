@@ -1000,6 +1000,9 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                     }
                     break;
                 }
+                else if ((find_from) && ((*it) == "object_category")){
+                    answer["object_room"] = "room_not_known";
+                }
                 // Response to user
                 if ((*it) == "location_category") {
                     if (find_from) {
