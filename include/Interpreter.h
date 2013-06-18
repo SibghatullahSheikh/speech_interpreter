@@ -112,6 +112,9 @@ public:
      */
     std::string getYesNoFunc(bool confirmation, const double n_tries_max, const double time_out);
 
+    // check if class has 1 or more options (example: drink has 3 inputs, coke, icetea and teapack. type_category = "object_category", class_category = "drink")
+    std::string hasClassMultipleOptions(std::string type_category, std::string class_category);
+
 	// Services
 	ros::ServiceServer info_service_;
 	ros::ServiceServer action_service_;

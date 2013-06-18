@@ -232,7 +232,7 @@ bool Interpreter::getInfo(const std::string& type, const ros::Duration& max_dura
 				// Check if the requested type equals the current category
                 if (itp->first == type_lower) {
                     ROS_INFO("I will get you a %s, %d tries and time out of %f", type_lower.c_str(), max_num_tries, max_duration.toSec());
-					return_value = true;
+                    return_value = true;
 				}
 			}
 		}
@@ -269,7 +269,7 @@ bool Interpreter::getInfo(const std::string& type, const ros::Duration& max_dura
  * Function that gets an action from a user and asks for missing information
  */
 bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_num_tries, std::map<std::string, std::string>& answer) {
-        // Check action type that is requested
+
 	// Initial response should be empty
     answer["action"] = "empty";
     answer["start_location"] = "meeting_point";
@@ -477,7 +477,7 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
 		// Check which instance of the object/location is already given
 		std::string response = "empty";
 		for (std::vector<std::pair<std::string, int> >::const_iterator it_cat = category_map_[(*it)].begin();
-				it_cat != category_map_[(*it)].end(); ++it_cat) {
+                it_cat != category_map_[(*it)].end(); ++it_cat) {
 
 			// Check if action contains current object/location category
 			if (action.find(it_cat->first) != std::string::npos) {
@@ -1598,6 +1598,7 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
     std::string answer_location_exact_from = "empty";
     std::string answer_location_exact_to = "empty";
     std::string answer_location_or_object;
+    std::string answer_options_in_class;
 
     ROS_INFO("First action heard was = '%s'", action_heard[0].c_str());
     ROS_INFO("Second action heard was = '%s'", action_heard[1].c_str());
@@ -1848,7 +1849,15 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
 
                 // determine exact object to transport or get
                 if (!(answer_object_class == "no_answer") || !(answer_object_class == "wrong_answer")) {
-                    answer_object_exact = askUser(answer_object_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                    // Check how many options there are in object class
+                    if ((answer_options_in_class = hasClassMultipleOptions("object_category",answer_object_class)) == "more") {
+                        std::cout << "TRUE, multiple options" << std::endl;
+                        answer_object_exact = askUser(answer_object_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                    }
+                    else {
+                        std::cout << "FALSE, only one option: " << answer_options_in_class << std::endl;
+                        answer_object_exact = answer_options_in_class;
+                    }
                 }
             }
 
@@ -1867,9 +1876,16 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                     else {
                         // determine exact object to transport or get
                         if (!(answer_location_class == "no_answer") || !(answer_location_class == "wrong_answer")) {
-                            answer_location_exact_from = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                            // Check how many options there are in object class
+                            if ((answer_options_in_class = hasClassMultipleOptions("location_category",answer_location_class)) == "more") {
+                                std::cout << "TRUE, multiple options" << std::endl;
+                                answer_location_exact_from = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                            }
+                            else {
+                                std::cout << "FALSE, only one option: " << answer_options_in_class << std::endl;
+                                answer_location_exact_from = answer_options_in_class;
+                            }
                         }
-
                     }
                 }
             }
@@ -1892,9 +1908,17 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                     else {
                         // determine exact location to transport object to
                         if (!(answer_location_class == "no_answer") || !(answer_location_class == "wrong_answer")) {
-                            answer_location_exact_to = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
-                        }
 
+                            // Check how many options there are in object class
+                            if ((answer_options_in_class = hasClassMultipleOptions("location_category",answer_location_class)) == "more") {
+                                std::cout << "TRUE, multiple options" << std::endl;
+                                answer_location_exact_to = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                            }
+                            else {
+                                std::cout << "FALSE, only one option: " << answer_options_in_class << std::endl;
+                                answer_location_exact_to = answer_options_in_class;
+                            }
+                        }
                     }
                 }
             }
@@ -1925,9 +1949,16 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                     else {
                         // determine exact location to point at
                         if (!(answer_location_class == "no_answer") || !(answer_location_class == "wrong_answer")) {
-                            answer_location_exact_to = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                            // Check how many options there are in object class
+                            if ((answer_options_in_class = hasClassMultipleOptions("location_category",answer_location_class)) == "more") {
+                                std::cout << "TRUE, multiple options" << std::endl;
+                                answer_location_exact_to = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                            }
+                            else {
+                                std::cout << "FALSE, only one option: " << answer_options_in_class << std::endl;
+                                answer_location_exact_to = answer_options_in_class;
+                            }
                         }
-
                     }
                 }
             }
@@ -1941,7 +1972,15 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
 
                     // determine exact object to point at
                     if (!(answer_object_class == "no_answer") || !(answer_object_class == "wrong_answer")) {
-                        answer_object_exact = askUser(answer_object_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                        // Check how many options there are in object class
+                        if ((answer_options_in_class = hasClassMultipleOptions("object_category",answer_object_class)) == "more") {
+                            std::cout << "TRUE, multiple options" << std::endl;
+                            answer_object_exact = askUser(answer_object_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                        }
+                        else {
+                            std::cout << "FALSE, only one option: " << answer_options_in_class << std::endl;
+                            answer_object_exact = answer_options_in_class;
+                        }
                     }
                 }
 
@@ -1959,7 +1998,15 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                         }
                         else {
                             if (!(answer_location_class == "no_answer") || !(answer_location_class == "wrong_answer")) {
-                                answer_location_exact_from = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                                // Check how many options there are in object class
+                                if ((answer_options_in_class = hasClassMultipleOptions("location_category",answer_location_class)) == "more") {
+                                    std::cout << "TRUE, multiple options" << std::endl;
+                                    answer_location_exact_from = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                                }
+                                else {
+                                    std::cout << "FALSE, only one option: " << answer_options_in_class << std::endl;
+                                    answer_location_exact_from = answer_options_in_class;
+                                }
                             }
                         }
                     }
@@ -1984,9 +2031,16 @@ std::vector<std::string> Interpreter::askActionInSteps(const double time_out) {
                 else {
                     // determine exact location to go to
                     if (!(answer_location_class == "no_answer") || !(answer_location_class == "wrong_answer")) {
-                        answer_location_exact_to = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                        // Check how many options there are in object class
+                        if ((answer_options_in_class = hasClassMultipleOptions("location_category",answer_location_class)) == "more") {
+                            std::cout << "TRUE, multiple options" << std::endl;
+                            answer_location_exact_to = askUser(answer_location_class, 10, time_out - (ros::Time::now().toSec() - t_start));
+                        }
+                        else {
+                            std::cout << "FALSE, only one option: " << answer_options_in_class << std::endl;
+                            answer_location_exact_to = answer_options_in_class;
+                        }
                     }
-
                 }
             }
         }
@@ -2747,6 +2801,34 @@ int Interpreter::getPosString(std::string input_text, std::string found_text) {
      }
     ROS_DEBUG("Did not found word '%s' in = %s", found_text.c_str(), input_text.c_str());
     return pos;
+}
+
+std::string Interpreter::hasClassMultipleOptions(std::string type_category, std::string class_category) {
+
+    std::vector<psi::BindingSet> response = client_reasoner_->query(psi::Compound("category_map", psi::Constant(type_category),  psi::Constant(class_category), psi::Variable("N")));
+
+    int amount_answers_class = response[0].get("N").getNumber();
+
+    //std::cout << "Ammount in class " << class_category << " is " << amount_answers_class << std::endl;
+
+    if (amount_answers_class > 1) {
+        return "more";
+    }
+    else {
+        ROS_DEBUG("%s has only one possible value", class_category.c_str());
+
+        std::string answer;
+        if (class_category == "bathroomstuff") {
+            answer = "cif";
+        }
+        else if (class_category == "bin") {
+            answer = "bin";
+        }
+        amigoSpeak("I only know one " + class_category);
+        amigoSpeak("So I guess you mean the " + answer);
+        return answer;
+    }
+
 }
 
 }
