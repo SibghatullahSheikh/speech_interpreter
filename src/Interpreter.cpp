@@ -192,6 +192,16 @@ bool Interpreter::getInfo(const std::string& type, const ros::Duration& max_dura
     std::transform(type_lower.begin(), type_lower.end(), type_lower.begin(), ::tolower);
 	std::string response = "";
 
+    if (iExplainedLights == false) {
+        // Explain lights during questioning:
+        // Red: Amigo talks
+        // Green: Questioner talks
+        setColor(1,0,0); // color red
+        std::string explaining_txt = "Would you please answer the questions when my lights become green.";
+        amigoSpeak(explaining_txt);
+
+        iExplainedLights = true;
+    }
 	// Validate input
     if (type_lower == "name") {
         ROS_INFO("I will get you a name, %d tries and time out of %f", max_num_tries, max_duration.toSec());
@@ -222,6 +232,10 @@ bool Interpreter::getInfo(const std::string& type, const ros::Duration& max_dura
         ROS_INFO("I will get you your name in %d tries and time out of %f", max_num_tries, max_duration.toSec());
 
     }
+    else if (type_lower == "object_classes") {
+        ROS_INFO("I will get you your name in %d tries and time out of %f", max_num_tries, max_duration.toSec());
+
+    }
     else {
 
 		// Iterate over categories and determine if it is present
@@ -236,18 +250,18 @@ bool Interpreter::getInfo(const std::string& type, const ros::Duration& max_dura
 				}
 			}
 		}
-        if (iExplainedLights == false) {
-            // Explain lights during questioning:
-            // Red: Amigo talks
-            // Green: Question        // Check action type that is requesteder talks
-            setColor(1,0,0); // color red
-            /*std::string explaining_txt = "Before I ask you where I should go, I just want to tell you that if my lights are red during questioning, I will do the word and when my lights are green during questioning, you can talk.";
-            */
-            std::string explaining_txt = "Would you please answer the question when my lights become green.";
-            amigoSpeak(explaining_txt);
+//        if (iExplainedLights == false) {
+//            // Explain lights during questioning:
+//            // Red: Amigo talks
+//            // Green: Question        // Check action type that is requesteder talks
+//            setColor(1,0,0); // color red
+//            /*std::string explaining_txt = "Before I ask you where I should go, I just want to tell you that if my lights are red during questioning, I will do the word and when my lights are green during questioning, you can talk.";
+//            */
+//            std::string explaining_txt = "Would you please answer the questions when my lights become green.";
+//            amigoSpeak(explaining_txt);
 
-            iExplainedLights = true;
-        }
+//            iExplainedLights = true;
+//        }
 		// Feedback in case of invalid request
 		if (!return_value) {
             ROS_WARN("Speech interpreter received request for %s, which is unknown", type_lower.c_str());
@@ -290,9 +304,7 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
         // Red: Amigo talks
         // Green: Questioner talks
         setColor(1,0,0); // color red
-        /*std::string explaining_txt = "Before I ask you what I can do for you, I just want to tell you that if my lights are red during questioning, I will do the word and when my lights are green during questioning, you can talk.";
-        */
-        std::string explaining_txt = "Would you please answer the question when my lights become green.";
+        std::string explaining_txt = "Would you please answer the questions when my lights become green.";
         amigoSpeak(explaining_txt);
         
         iExplainedLights = true;
@@ -1226,37 +1238,34 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
     } else if (type == "demo_challenge_anything_else") {
         starting_txt = "";
     } else if (type == "drink_cocktail") {
-        if (iExplainedLights == false) {
-            // Explain lights during questioning:
-            // Red: Amigo talks
-            // Green: Questioner talks
-            setColor(1,0,0); // color red
-            /*std::string explaining_txt = "Before I ask you what drink you would like, I just want to tell you that if my lights are red during questioning, I will do the word and when my lights are green during questioning, you can talk.";
-            */
-            std::string explaining_txt = "Would you please answer the questions when my lights become green.";
-            amigoSpeak(explaining_txt);
+//        if (iExplainedLights == false) {
+//            // Explain lights during questioning:
+//            // Red: Amigo talks
+//            // Green: Questioner talks
+//            setColor(1,0,0); // color red
+//            /*std::string explaining_txt = "Before I ask you what drink you would like, I just want to tell you that if my lights are red during questioning, I will do the word and when my lights are green during questioning, you can talk.";
+//            */
+//            std::string explaining_txt = "Would you please answer the questions when my lights become green.";
+//            amigoSpeak(explaining_txt);
 
-            iExplainedLights = true;
-        }
+//            iExplainedLights = true;
+//        }
         std::vector<std::string> possible_text;
         possible_text.push_back("Could you please tell me what drink you want?");
         possible_text.push_back("What drink would you like to have?");
         possible_text.push_back("Which drink can I serve you?");
         starting_txt = getSentence(possible_text);
     } else if (type == "room_cleanup") {
-        if (iExplainedLights == false) {
-            // Explain lights during questioning:
-            // Red: Amigo talks
-            // Green: Questioner talks
-            setColor(1,0,0); // color reds
-            /*std::string explaining_txt = "Before I ask you which room you would like me to clean, I just want to tell you that if my"
-						"lights are red during questioning, I will do the word and when my lights are green during questioning, you can talk.";
-			*/		
-            std::string explaining_txt = "Would you please answer the question when my lights become green.";
-            amigoSpeak(explaining_txt);
+//        if (iExplainedLights == false) {
+//            // Explain lights during questioning:
+//            // Red: Amigo talks
+//            // Green: Questioner talks
+//            setColor(1,0,0); // color reds
+//            std::string explaining_txt = "Would you please answer the question when my lights become green.";
+//            amigoSpeak(explaining_txt);
 
-            iExplainedLights = true;
-        }
+//            iExplainedLights = true;
+//        }
         type = "cleanup";
         std::vector<std::string> possible_text;
         possible_text.push_back("What can I do for you?");
@@ -1272,18 +1281,16 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         ROS_DEBUG("No starting text for object_or_location");
 
     } else if (type == "name_maxima"){
-        if (iExplainedLights == false) {
-            // Explain lights during questioning:
-            // Red: Amigo talks
-            // Green: Questioner talks
-            setColor(1,0,0); // color red
-            /*std::string explaining_txt = "Before I ask you what drink you would like, I just want to tell you that if my lights are red during questioning, I will do the word and when my lights are green during questioning, you can talk.";
-            */
-            std::string explaining_txt = "Would you please answer the questions when my lights become green.";
-            amigoSpeak(explaining_txt);
+//        if (iExplainedLights == false) {
+//            // Explain lights during questioning:
+//            // Red: Amigo talks
+//            // Green: Questioner talks
+//            setColor(1,0,0); // color red
+//            std::string explaining_txt = "Would you please answer the questions when my lights become green.";
+//            amigoSpeak(explaining_txt);
 
-            iExplainedLights = true;
-        }
+//            iExplainedLights = true;
+//        }
         std::vector<std::string> possible_text;
         possible_text.push_back("Could you please tell me your name?");
         possible_text.push_back("Can you give me your name?");
