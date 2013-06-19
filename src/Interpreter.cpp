@@ -1272,6 +1272,18 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         ROS_DEBUG("No starting text for object_or_location");
 
     } else if (type == "name_maxima"){
+        if (iExplainedLights == false) {
+            // Explain lights during questioning:
+            // Red: Amigo talks
+            // Green: Questioner talks
+            setColor(1,0,0); // color red
+            /*std::string explaining_txt = "Before I ask you what drink you would like, I just want to tell you that if my lights are red during questioning, I will do the word and when my lights are green during questioning, you can talk.";
+            */
+            std::string explaining_txt = "Would you please answer the questions when my lights become green.";
+            amigoSpeak(explaining_txt);
+
+            iExplainedLights = true;
+        }
         std::vector<std::string> possible_text;
         possible_text.push_back("Could you please tell me your name?");
         possible_text.push_back("Can you give me your name?");
