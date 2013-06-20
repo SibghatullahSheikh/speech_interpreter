@@ -1219,7 +1219,6 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         }
         std::vector<std::string> possible_text;
         possible_text.push_back("Could you please tell me your name?");
-        possible_text.push_back("Can you give me your name?");
         possible_text.push_back("What is your name?");
         starting_txt = getSentence(possible_text);
 	} else if (type == "action") {
@@ -1228,7 +1227,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         starting_txt = "What can I do for you?";
         t_max_question = 300; // = 5 minutes, in e-gpsr 2013 amigo should handle waiting long time for input.
     } else if (type == "bedroom" || type =="livingroom" || type == "kitchen" || type == "lobby" || type == "diningroom") {
-        starting_txt = "Can you give me the exact location?";
+        starting_txt = "What is the exact location?";
     } else if (type == "cleanup") {
         starting_txt = "What do you want me to do";
     } else if (type == "open_challenge") {
@@ -1257,6 +1256,8 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         possible_text.push_back("What drink would you like to have?");
         possible_text.push_back("Which drink can I serve you?");
         starting_txt = getSentence(possible_text);
+        type = "drink";
+
     } else if (type == "room_cleanup") {
 //        if (iExplainedLights == false) {
 //            // Explain lights during questioning:
@@ -1274,10 +1275,10 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         starting_txt = getSentence(possible_text);
 
     } else if (type == "location_classes"){
-        starting_txt = "Can you specify which location class you mean?";
+        starting_txt = "Which location class do you mean?";
 
     } else if (type == "object_classes"){
-        starting_txt = "Can you specify which object class you mean?";
+        starting_txt = "Which object class do you mean?";
 
     } else if (type == "object_or_location"){
         ROS_DEBUG("No starting text for object_or_location");
@@ -1295,15 +1296,13 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 //        }
         std::vector<std::string> possible_text;
         possible_text.push_back("Could you please tell me your name?");
-        possible_text.push_back("Can you give me your name?");
         possible_text.push_back("What is your name?");
         starting_txt = getSentence(possible_text);
     } else if (type == "numbers"){
         starting_txt = "";
 
     } else {
-		std::string art = (start_with_vowel)?"an ":"a ";
-        starting_txt = "Can you specify which " + type + " you mean?";
+        starting_txt = "Would you specify which " + type + " you mean?";
     }    
 
     // Ask
