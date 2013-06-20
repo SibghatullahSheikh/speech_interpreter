@@ -484,6 +484,8 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
 		return true;
 	}
 
+    bool dropoff_loc = false;
+
 	// Ask for additional information
 	for (std::vector<std::string>::const_iterator it = it_action->second.begin(); it != it_action->second.end(); ++it) {
         ROS_DEBUG("%s is needed", it->c_str());
@@ -504,14 +506,37 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                     //amigoSpeak("I am sorry, but I need more information."); //" Can you be more specific?"); REMOVED THIS SENTENCE, DOES NOT FEEL NATURAL
 
                     if ((*it) == "location_category") {
-                        if (find_from) {
-                            if (answer["action"] == "transport" || answer["action"] == "get") {
+                        dropoff_loc = false;
+                        // First a check if location class belongs to dropoff or pickup location if action = transport
+                        if (answer["action"] == "transport") {
+
+                            std::string loc_class = it_cat->first;
+                            // add space at beginning and end of category, so that we are sure the category is not found within another word.
+                            loc_class.insert(0," ");
+                            loc_class.insert(loc_class.length()," ");
+
+                            ROS_DEBUG("comparing --%s--", loc_class.c_str());
+
+                            if (getPosString(action, (loc_class)) > getPosString(action," to ")) {
+                                ROS_DEBUG("location class belongs to dropoff location");
+                                amigoSpeak("About the dropoff location,");
+                                dropoff_loc = true;
+                            } else {
+                                loc_class.erase(loc_class.length()-1);
+                                ROS_DEBUG("comparing --%s--", loc_class.c_str());
+                                if (getPosString(action, (loc_class)) > getPosString(action," to ")) {
+                                    ROS_DEBUG("location class belongs to dropoff location");
+                                    amigoSpeak("About the dropoff location,");
+                                    dropoff_loc = true;
+                                } else {
+                                ROS_DEBUG("location class belongs to pickup location");
                                 amigoSpeak("I wonder where you wanted me to get the object from.");
+                                }
                             }
                         }
-                        else if (find_to) {
-                            if (answer["action"] == "transport") {
-                                amigoSpeak("About the dropoff location,");
+                        else if (find_from) {
+                            if (answer["action"] == "get") {
+                                amigoSpeak("I wonder where you wanted me to get the object from.");
                             }
                         }
                     }
@@ -1019,11 +1044,12 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                 }
                 // Response to user
                 if ((*it) == "location_category") {
-                    if (find_from) {
+                    if (dropoff_loc) {
+                        answer["end_location"] = response;
+                    } else if (find_from) {
                         answer["object_location"] = response;
                         find_from=false;
-                    }
-                    else {
+                    } else {
                         answer["end_location"] = response;
                     }
                 }
@@ -2817,6 +2843,7 @@ bool Interpreter::getOpenChallenge(const ros::Duration& max_duration, unsigned i
 
 int Interpreter::getPosString(std::string input_text, std::string found_text) {
 
+    ROS_DEBUG("Text to be found = --%s--",found_text.c_str());
     int pos = -1;
     while(true && ros::ok()) {
         pos =  input_text.find(found_text, ++pos);
