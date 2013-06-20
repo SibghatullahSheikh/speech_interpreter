@@ -234,7 +234,9 @@ bool Interpreter::getInfo(const std::string& type, const ros::Duration& max_dura
     }
     else if (type_lower == "object_classes") {
         ROS_INFO("I will get you your name in %d tries and time out of %f", max_num_tries, max_duration.toSec());
-
+    }
+    else if (type_lower == "numbers") {
+        ROS_INFO("I will get you your name in %d tries and time out of %f", max_num_tries, max_duration.toSec());
     }
     else {
 
@@ -1296,6 +1298,9 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         possible_text.push_back("Can you give me your name?");
         possible_text.push_back("What is your name?");
         starting_txt = getSentence(possible_text);
+    } else if (type == "numbers"){
+        starting_txt = "";
+
     } else {
 		std::string art = (start_with_vowel)?"an ":"a ";
         starting_txt = "Can you specify which " + type + " you mean?";
