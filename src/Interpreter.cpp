@@ -37,7 +37,7 @@ Interpreter::Interpreter() : answer_("") {
 	// Initialize speech recognition services
 	initializeSpeechServicesTopics(nh);
 
-	// Offer services
+    // Offer servicesdrink
 
     // these will become obsolete
     info_service_ = nh.advertiseService("get_info_user", &Interpreter::getInfoSrv, this);
@@ -236,6 +236,9 @@ bool Interpreter::getInfo(const std::string& type, const ros::Duration& max_dura
         ROS_INFO("I will get you your name in %d tries and time out of %f", max_num_tries, max_duration.toSec());
     }
     else if (type_lower == "numbers") {
+        ROS_INFO("I will get you your name in %d tries and time out of %f", max_num_tries, max_duration.toSec());
+    }
+    else if (type_lower == "side") {
         ROS_INFO("I will get you your name in %d tries and time out of %f", max_num_tries, max_duration.toSec());
     }
     else {
@@ -1263,6 +1266,8 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
     } else if (type == "demo_challenge_status_person") {
         starting_txt = "";
     } else if (type == "demo_challenge_anything_else") {
+        starting_txt = "";
+    } else if (type == "side") {
         starting_txt = "";
     } else if (type == "drink_cocktail") {
 //        if (iExplainedLights == false) {
