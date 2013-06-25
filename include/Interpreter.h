@@ -129,6 +129,7 @@ public:
 	std::map<std::string, std::string> action_map_;
     CategoryMap category_map_;
 	std::map<std::string, std::vector<std::string> > action_category_map_;
+    std::map<std::string, std::string> compound_map_;
 
     // pocketsphinx communication
     ros::ServiceClient client_speech_recognition_;
@@ -159,6 +160,9 @@ private:
     std::vector<std::string> action_steps;
 
     ros::Publisher pub_amigo_speech_sim_; // For using amigo's speech in simulation
+
+    std::string splitCompound(const std::string& word);
+
 };
 
 }

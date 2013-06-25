@@ -95,6 +95,15 @@ void Interpreter::initialize(ros::NodeHandle& nh) {
         //std::cout << set.get("A").toString() << ", " << set.get("B").toString() << ", " << set.get("N").getNumber() << std::endl;
     }
 
+    // load word compound mappings
+    std::vector<psi::BindingSet> resp_compound_mappings = client_reasoner_->query(psi::Compound("word_compound", psi::Variable("A"), psi::Variable("B")));
+    for(std::vector<psi::BindingSet>::iterator it = resp_compound_mappings.begin(); it != resp_compound_mappings.end(); ++it) {
+        const psi::BindingSet& set = *it;
+        compound_map_[set.get("A").toString()] = set.get("B").toString();
+
+        std::cout << set.get("A").toString() << " --> " << set.get("B").toString() << std::endl;
+    }
+
     std::string path = ros::package::getPath("tue_knowledge") + "/speech_recognition";
 
     // connect to pocketsphinx
@@ -1071,6 +1080,14 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
 	return true;
 }
 
+std::string Interpreter::splitCompound(const std::string& word) {
+    std::map<std::string, std::string>::iterator it_compound = compound_map_.find(word);
+    if (it_compound != compound_map_.end()) {
+        return it_compound->second;
+    }
+    return word;
+}
+
 
 /**
  * Callback for speech
@@ -1172,6 +1189,11 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
         unsigned found=answer_.find(" ");
         std::string part = answer_.substr(0,found);
         answer_= part;
+    }
+
+    // convert answer to answer with spaces (e.g., 'livingroom' to 'living room') (EXCEPT FOR SENTENCES!)
+    if (category != "sentences") {
+        answer_ = splitCompound(answer_);
     }
 
     // Check for key words
@@ -1370,7 +1392,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 unsigned found1=result.find("cleanupthe");
                 unsigned found2=result.find(" ");
                 std::string part = result.substr((found1+10),found2);
-                result = part;
+                result = splitCompound(part);
 
                 amigoSpeak("I heard clean up the " + result);
                 std::vector<std::string> possible_text;
