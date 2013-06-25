@@ -135,6 +135,8 @@ bool Interpreter::askUser(speech_interpreter::AskUser::Request  &req, speech_int
         getInfo(req.info_type, req.time_out, req.num_tries, answer);
     }
 
+    addUnderscores(answer);
+
     for(std::map<std::string, std::string>::iterator it = answer.begin(); it != answer.end(); ++it) {
         res.keys.push_back(it->first);
         res.values.push_back(it->second);
@@ -146,6 +148,7 @@ bool Interpreter::askUser(speech_interpreter::AskUser::Request  &req, speech_int
 bool Interpreter::getInfoSrv(speech_interpreter::GetInfo::Request  &req, speech_interpreter::GetInfo::Response &res) {
     std::map<std::string, std::string> answer;
     getInfo(req.type, ros::Duration(req.time_out), req.n_tries, answer);
+    addUnderscores(answer);
     res.answer = answer["answer"];
     return true;
 }
@@ -153,6 +156,7 @@ bool Interpreter::getInfoSrv(speech_interpreter::GetInfo::Request  &req, speech_
 bool Interpreter::getActionSrv(speech_interpreter::GetAction::Request  &req, speech_interpreter::GetAction::Response &res) {
     std::map<std::string, std::string> answer;
     getAction(ros::Duration(req.time_out), 1, answer);
+    addUnderscores(answer);
     
     res.action = answer["action"];
     res.end_location = answer["end_location"];
@@ -166,6 +170,7 @@ bool Interpreter::getActionSrv(speech_interpreter::GetAction::Request  &req, spe
 bool Interpreter::getContinueSrv(speech_interpreter::GetContinue::Request  &req, speech_interpreter::GetContinue::Response &res) {
     std::map<std::string, std::string> answer;
     getContinue(ros::Duration(req.time_out), req.n_tries_max, answer);
+    addUnderscores(answer);
     res.answer = answer["answer"];
     return true;
 }
@@ -173,6 +178,7 @@ bool Interpreter::getContinueSrv(speech_interpreter::GetContinue::Request  &req,
 bool Interpreter::getYesNoSrv(speech_interpreter::GetYesNo::Request  &req, speech_interpreter::GetYesNo::Response &res) {
     std::map<std::string, std::string> answer;
     getYesNo(ros::Duration(req.time_out), req.n_tries_max, answer);
+    addUnderscores(answer);
     res.answer = answer["answer"];
     return true;
 }
@@ -180,6 +186,7 @@ bool Interpreter::getYesNoSrv(speech_interpreter::GetYesNo::Request  &req, speec
 bool Interpreter::getCleanupSrv(speech_interpreter::GetCleanup::Request  &req, speech_interpreter::GetCleanup::Response &res) {
     std::map<std::string, std::string> answer;
     getCleanup(ros::Duration(req.time_out), req.n_tries_max, answer);
+    addUnderscores(answer);
     res.answer = answer["answer"];
     return true;
 }
@@ -187,6 +194,7 @@ bool Interpreter::getCleanupSrv(speech_interpreter::GetCleanup::Request  &req, s
 bool Interpreter::getOpenChallengeSrv(speech_interpreter::GetOpenChallenge::Request  &req, speech_interpreter::GetOpenChallenge::Response &res) {
     std::map<std::string, std::string> answer;
     getOpenChallenge(ros::Duration(req.time_out), req.n_tries_max, answer);
+    addUnderscores(answer);
     res.answer = answer["answer"];
     return true;
 }
@@ -1073,6 +1081,12 @@ std::string Interpreter::splitCompound(const std::string& word) {
         return it_compound->second;
     }
     return word;
+}
+
+void Interpreter::addUnderscores(std::map<std::string, std::string>& answer_map) {
+    for(std::map<std::string, std::string>::iterator it = answer_map.begin(); it != answer_map.end(); ++it) {
+        std::replace(it->second.begin(), it->second.end(), ' ', '_');
+    }
 }
 
 

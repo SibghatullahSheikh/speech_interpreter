@@ -163,6 +163,8 @@ private:
 
     std::string splitCompound(const std::string& word);
 
+    void addUnderscores(std::map<std::string, std::string>& answer_map);
+
 };
 
 }
