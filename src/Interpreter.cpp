@@ -324,6 +324,21 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
     std::string action = askUser("action", max_num_tries, max_duration.toSec());
     ROS_DEBUG("Received action %s, %f seconds left for refining action", action.c_str(), ros::Time::now().toSec() - t_start);
 
+    //HACK FOR MAPPING DRINK TO DRINKS AND SNACK TO SNACKS
+    // IN EINDHOVEN WK
+    int pos_drink = getPosString(action,"drink");
+    if (pos_drink != -1) {
+        ROS_DEBUG("[TEST] Answer with drink was %s",action.c_str());
+        action.replace(action.find("drink"), 5, "drinks");
+        ROS_DEBUG("[TEST] Answer with drinks is now %s",action.c_str());
+    }
+    int pos_snack = getPosString(action,"snack");
+    if (pos_snack != -1) {
+        ROS_DEBUG("[TEST] Answer with snack was %s",action.c_str());
+        action.replace(action.find("snack"), 5, "snacks");
+        ROS_DEBUG("[TEST] Answer with snacks is now %s",action.c_str());
+    }
+
     // Check if action is heard correctly, otherwise get action in steps
     if (action == "wrong action heard") {
         action_steps = askActionInSteps(max_duration.toSec());
@@ -563,7 +578,7 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
 
                 if ((*it) == "object_category") {
                     answer["object"] = response;
-                }
+                }              
 
                 if (!(find_from) && ((*it) == "object_category")) {
                     // If category is object, location is queried. First which room -> if yes -> which specific location?
@@ -642,6 +657,7 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                             std::string art = (start_with_vowel)?"an ":"a ";
                             std::string starting_txt = "Are you aware of the room in which I can find " + art + response;
                             amigoSpeak(starting_txt);
+                            amigoSpeak("yes or no");
 
                             while (n_tries < 5 && ros::ok()) {
                                 if (waitForAnswer("yesno", 10.0)) {
@@ -706,7 +722,7 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                                                         std::string art = (start_with_vowel)?"an ":"a ";
                                                         std::string starting_txt = "Are you aware of the room in which I can find " + art + response;
                                                         amigoSpeak(starting_txt);
-
+                                                        amigoSpeak("yes or no");
                                                         while (n_tries < 5 && ros::ok()) {
                                                             if (waitForAnswer("yesno", 10.0)) {
                                                                 setColor(1,0,0); // color red
@@ -783,6 +799,7 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                                                             answer["object_room"] = response_object_room;
                                                             std::string starting_txt = "Since you know which room, are you also aware of the specific location to find " + art + response;
                                                             amigoSpeak(starting_txt);
+                                                            amigoSpeak("yes or no");
                                                             n_tries = 0;    // Check action type that is requested, first determine if action is bring/navigate/go and which category the action then is.
                                                             if (getPosString(action,"bring ") != -1){
                                                                 if (find_me) {
@@ -820,7 +837,13 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                                                                         sentence = getSentence(possible_text);
                                                                         amigoSpeak(sentence);
                                                                         object_location_known = true;
-                                                                        response_object_location = askUser(response_object_room, 5, max_duration.toSec() - (ros::Time::now().toSec() - t_start));
+
+                                                                        // TODO ERIK MAKE MORE GENERIC
+                                                                        if (response_object_room == "living room") {
+                                                                            response_object_location = askUser("livingroom", 5, max_duration.toSec() - (ros::Time::now().toSec() - t_start));
+                                                                        } else {
+                                                                            response_object_location = askUser(response_object_room, 5, max_duration.toSec() - (ros::Time::now().toSec() - t_start));
+                                                                        }
                                                                         if (response_object_location == "no_answer") {
                                                                             // Check action type that is requested, first determine if action is bring/navigate/go and which category the action then is.
                                                                             if (getPosString(action,"bring ") != -1){
@@ -959,6 +982,7 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                                 answer["object_room"] = response_object_room;
                                 std::string starting_txt = "Since you know which room, are you also aware of the specific location to find " + art + response;
                                 amigoSpeak(starting_txt);
+                                amigoSpeak("yes or no");
                                 n_tries = 0;
                                 bool object_location_known = false;
                                 std::string response_object_location = "empty";
@@ -978,7 +1002,14 @@ bool Interpreter::getAction(const ros::Duration& max_duration, unsigned int max_
                                             sentence = getSentence(possible_text);
                                             amigoSpeak(sentence);
                                             object_location_known = true;
-                                            response_object_location = askUser(response_object_room, 5, max_duration.toSec() - (ros::Time::now().toSec() - t_start));
+
+                                            // TODO ERIK MAKE MORE GENERIC
+                                            if (response_object_room == "living room") {
+                                                response_object_location = askUser("livingroom", 5, max_duration.toSec() - (ros::Time::now().toSec() - t_start));
+                                            } else {
+                                                response_object_location = askUser(response_object_room, 5, max_duration.toSec() - (ros::Time::now().toSec() - t_start));
+                                            }
+
                                             if (response_object_location == "no_answer") {
                                                 object_location_known = false;
                                                 std::string txt_room = "I will go look for myself in the " + response_object_room + ". No problem!";
