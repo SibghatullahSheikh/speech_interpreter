@@ -258,6 +258,9 @@ bool Interpreter::getInfo(const std::string& type, const ros::Duration& max_dura
     else if (type_lower == "side") {
         ROS_INFO("I will get you your side in %d tries and time out of %f", max_num_tries, max_duration.toSec());
     }
+    else if (type_lower == "continue_confirm") {
+        ROS_INFO("I will get you your side in %d tries and time out of %f", max_num_tries, max_duration.toSec());
+    }
     else {
 
 		// Iterate over categories and determine if it is present
@@ -1350,7 +1353,12 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
     } else if (type == "drinks" || type == "snacks"){
         starting_txt = "Which one of the " + type + " do you mean?";
 
-    } else {
+    } else if (type == "continue_confirm") {
+        starting_txt = "";
+        type = "continue";
+    }
+
+    else {
         starting_txt = "Please, specify which " + type + " you mean?";
     }    
 
