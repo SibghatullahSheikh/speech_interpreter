@@ -1322,11 +1322,14 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         starting_txt = "";
     } else if (type == "drink_cocktail") {
         std::vector<std::string> possible_text;
-        possible_text.push_back("Could you please tell me what drink you want?");
-        possible_text.push_back("What drink would you like to have?");
-        possible_text.push_back("Which drink can I serve you?");
+//        possible_text.push_back("Could you please tell me what drink you want?");
+//        possible_text.push_back("What drink would you like to have?");
+//        possible_text.push_back("Which drink can I serve you?");
+
+        possible_text.push_back("Do you want a coke or a seven up, that's all we have left. Please say either coke or seven up.");
+
         starting_txt = getSentence(possible_text);
-        type = "drinks";
+        type = "drinks_maxima";
 
         // TODO CHANGE THIS TO DRINK IN EINDHOVEN!
 
