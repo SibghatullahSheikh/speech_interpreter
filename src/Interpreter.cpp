@@ -1280,6 +1280,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 	double t_start = ros::Time::now().toSec();
 	unsigned int n_tries = 0;
     unsigned int n_tries_before_deeper_questioning = 0;
+    unsigned int n_tries_before_deeper_questioning_without_answer = 0;
 
 	// Maximum waiting time per question
     double t_max_question = 10.0;   // before = std::max(9.0, time_out/(2.0*n_tries_max));
@@ -1372,6 +1373,26 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 
         if ((type == "sentences") && (n_tries_before_deeper_questioning == 2)) {
             result = "wrong action heard";
+            break;
+        }
+
+        if ((type == "sentences") && (n_tries_before_deeper_questioning_without_answer == 3)) {
+            result = "wrong action heard";
+            if (type == "sentences") {
+                std::string action_fake = "get";
+                action_heard.push_back(action_fake);
+                action_heard_keywords.push_back(find_me);
+                action_heard_keywords.push_back(find_from);
+                action_heard_keywords.push_back(find_to);
+                action_heard_keywords.push_back(find_exit);
+                action_heard_keywords.push_back(find_at);
+                action_heard.push_back(action_fake);
+                action_heard_keywords.push_back(find_me);
+                action_heard_keywords.push_back(find_from);
+                action_heard_keywords.push_back(find_to);
+                action_heard_keywords.push_back(find_exit);
+                action_heard_keywords.push_back(find_at);
+            }
             break;
         }
 
@@ -1634,22 +1655,28 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
 
 		// If no answer, ask again
 
-		else {
+        else {
             setColor(1,0,0); // color red
+            ++n_tries_before_deeper_questioning_without_answer;
             result = "no_answer";
-            std::vector<std::string> possible_text;
-            if ((n_tries + 1) == n_tries_max) {
-                possible_text.push_back("I did not hear you for a longer time.");
-                possible_text.push_back("I'm sorry, I did not hear from you for a longer time.");
+
+            if (n_tries_before_deeper_questioning_without_answer != 3) {
+
+                std::vector<std::string> possible_text;
+                //ROS_DEBUG("Continue to smaller questions to get to the right action");
+                if ((n_tries + 1) == n_tries_max) {
+                    possible_text.push_back("I did not hear you for a longer time.");
+                    possible_text.push_back("I'm sorry, I did not hear from you for a longer time.");
+                }
+                else {
+                    possible_text.push_back("I did not hear you, I'm sorry. Please say something.");
+                    possible_text.push_back("Did you say something? In any case, I was not able to hear you.");
+                    possible_text.push_back("I did not hear you, maybe you should get a little closer to me.");
+                }
+                std::string sentence;
+                sentence = getSentence(possible_text);
+                amigoSpeak(sentence);
             }
-            else {
-                possible_text.push_back("I did not hear you, I'm sorry. Please say something.");
-                possible_text.push_back("Did you say something? In any case, I was not able to hear you.");
-                possible_text.push_back("I did not hear you, maybe you should get a little closer to me.");
-            }
-            std::string sentence;
-            sentence = getSentence(possible_text);
-            amigoSpeak(sentence);
 
             ROS_DEBUG("n_tries before = %i", n_tries);
             ++n_tries;
