@@ -1338,10 +1338,11 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         starting_txt = "Where do you want me to go";
     } else if (type == "demo_challenge_breakfast") {
         starting_txt = "";
-        type == "breakfast";
+        //type = "demo_challenge_breakfast";
+        ROS_INFO("TYPE CHANGED TO breakfast");
     } else if (type == "demo_challenge_status_person") {
         starting_txt = "";
-        type == "status_person";
+        //type = "demo_challenge_status_person";
     } else if (type =="anything_else" || type =="remind_time" || type =="remind_action" || type =="side" || type =="numbers") {
         starting_txt = "";
     } else if (type == "drink_cocktail") {
@@ -1481,6 +1482,14 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 sentence = getSentence(possible_text);
                 amigoSpeak(sentence);
             }
+            else if ( type == "demo_challenge_breakfast") {
+                amigoSpeak("Alright you want " + result);
+                break;
+            }
+            else if ( type == "demo_challenge_status_person") {
+                amigoSpeak("Alright, you feel " + result);
+                break;
+            }
             else {
                 amigoSpeak("I heard " + result);
                 std::vector<std::string> possible_text;
@@ -1492,10 +1501,6 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 sentence = getSentence(possible_text);
                 amigoSpeak(sentence);
             }
-
-
-
-
 
             // If answer received, ask for confirmation
             if (waitForAnswer("yesno", 10.0)) {
@@ -1638,8 +1643,8 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                         amigoSpeak(sentence);
                     }
                     else if (type == "object_or_location" ||
-                             type == "breakfast" ||
-                             type == "status_person" ||
+                             type == "demo_challenge_breakfast" ||
+                             type == "demo_challenge_status_person" ||
                              type == "anything_else" ||
                              type == "remind_action" ||
                              type == "remind_time" ||
@@ -1653,9 +1658,9 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                         std::vector<std::string> possible_text;
                         if (type == "object_or_location") {
                             possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you tell me again if it should be an object or location?");
-                        } else if (type == "breakfast") {
+                        } else if (type == "demo_challenge_breakfast") {
                             possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you tell me again what you want for your breakfast?");
-                        } else if (type == "status_person") {
+                        } else if (type == "demo_challenge_status_person") {
                             possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you tell me again how you feel?");
                         } else if (type == "anything_else") {
                             possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you tell me again if I can do anything else?");
