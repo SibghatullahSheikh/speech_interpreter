@@ -252,6 +252,10 @@ bool Interpreter::getInfo(const std::string& type, const ros::Duration& max_dura
         ROS_INFO("I will get you an answer in %d tries and time out of %f", max_num_tries, max_duration.toSec());
         iExplainedLights = true;
     }
+    else if (type_lower == "drink_final") {
+        ROS_INFO("I will get you an answer in %d tries and time out of %f", max_num_tries, max_duration.toSec());
+        iExplainedLights = true;
+    }
     else if (type_lower == "name_maxima") {
         ROS_INFO("I will get you your name in %d tries and time out of %f", max_num_tries, max_duration.toSec());
     }
@@ -1267,6 +1271,13 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
         if (getPosString(answer_," at ") != -1){
             find_at = true;
         }
+    }    
+
+    if (category == "drink_final") {
+        if (getPosString(answer_," me ") != -1){
+            find_me = true;
+            answer_.replace(answer_.find("me"), 2, "you");
+        }
     }
 
     // Turn off speech recognition
@@ -1343,7 +1354,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
     } else if (type == "demo_challenge_status_person") {
         starting_txt = "";
         //type = "demo_challenge_status_person";
-    } else if (type =="anything_else" || type =="remind_time" || type =="remind_action" || type =="side" || type =="numbers") {
+    } else if (type =="anything_else" || type =="remind_time" || type =="remind_action" || type =="side" || type =="numbers" || type =="drink_final") {
         starting_txt = "";
     } else if (type == "drink_cocktail") {
         std::vector<std::string> possible_text;
@@ -1490,6 +1501,11 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 amigoSpeak("Alright, you feel " + result);
                 break;
             }
+            else if ( type =="drink_final")  {
+                amigoSpeak("Alright!");
+                break;
+            }
+
             else {
                 amigoSpeak("I heard " + result);
                 std::vector<std::string> possible_text;
