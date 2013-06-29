@@ -252,7 +252,7 @@ bool Interpreter::getInfo(const std::string& type, const ros::Duration& max_dura
         ROS_INFO("I will get you an answer in %d tries and time out of %f", max_num_tries, max_duration.toSec());
         iExplainedLights = true;
     }
-    else if (type_lower == "drink_final") {
+    else if (type_lower == "drink_final" || type_lower == "final_trashbin") {
         ROS_INFO("I will get you an answer in %d tries and time out of %f", max_num_tries, max_duration.toSec());
         iExplainedLights = true;
     }
@@ -1354,7 +1354,7 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
     } else if (type == "demo_challenge_status_person") {
         starting_txt = "";
         //type = "demo_challenge_status_person";
-    } else if (type =="anything_else" || type =="remind_time" || type =="remind_action" || type =="side" || type =="numbers" || type =="drink_final") {
+    } else if (type =="anything_else" || type =="remind_time" || type =="remind_action" || type =="side" || type =="numbers" || type =="drink_final" || type =="final_trashbin" ) {
         starting_txt = "";
     } else if (type == "drink_cocktail") {
         std::vector<std::string> possible_text;
@@ -1505,7 +1505,10 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 amigoSpeak("Alright!");
                 break;
             }
-
+            else if ( type =="final_trashbin")  {
+                amigoSpeak("Alright!");
+                break;
+            }
             else {
                 amigoSpeak("I heard " + result);
                 std::vector<std::string> possible_text;
