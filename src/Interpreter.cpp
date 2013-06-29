@@ -46,6 +46,7 @@ Interpreter::Interpreter() : answer_("") {
     yes_no_service_ = nh.advertiseService("get_yes_no", &Interpreter::getYesNoSrv, this);
     cleanup_service_ = nh.advertiseService("get_cleanup", &Interpreter::getCleanupSrv, this);
     open_challenge_service_ = nh.advertiseService("get_open_challenge", &Interpreter::getOpenChallengeSrv, this);
+    anything_else_service_ = nh.advertiseService("get_anything_else", &Interpreter::getAnythingElseSrv, this);       // used in demo challenge rwc2013 (eindhoven)
 
     // new generic service
     ask_user_service_  = nh.advertiseService("ask_user", &Interpreter::askUser, this);
@@ -131,6 +132,8 @@ bool Interpreter::askUser(speech_interpreter::AskUser::Request  &req, speech_int
         getCleanup(req.time_out, req.num_tries, answer);
     } else if (req.info_type == "open_challenge") {
         getOpenChallenge(req.time_out, req.num_tries, answer);
+    } else if (req.info_type == "anything_else") {
+        getAnythingElse(req.time_out, req.num_tries, answer);
     } else {
         getInfo(req.info_type, req.time_out, req.num_tries, answer);
     }
@@ -199,6 +202,14 @@ bool Interpreter::getOpenChallengeSrv(speech_interpreter::GetOpenChallenge::Requ
     return true;
 }
 
+bool Interpreter::getAnythingElseSrv(speech_interpreter::GetAnythingElse::Request  &req, speech_interpreter::GetAnythingElse::Response &res) {
+    std::map<std::string, std::string> answer;
+    getAnythingElse(ros::Duration(req.time_out), req.n_tries_max, answer);
+    addUnderscores(answer);
+    res.answer = answer["answer"];
+    return true;
+}
+
 /**
  * Service that asks info from user
  */
@@ -209,45 +220,40 @@ bool Interpreter::getInfo(const std::string& type, const ros::Duration& max_dura
     std::transform(type_lower.begin(), type_lower.end(), type_lower.begin(), ::tolower);
 	std::string response = "";
 
-    if (iExplainedLights == false) {
-        // Explain lights during questioning:
-        // Red: Amigo talks
-        // Green: Questioner talks
-        setColor(1,0,0); // color red
-        std::string explaining_txt = "Would you please answer the questions when my lights become green.";
-        amigoSpeak(explaining_txt);
 
-        iExplainedLights = true;
-    }
 	// Validate input
     if (type_lower == "name") {
         ROS_INFO("I will get you a name, %d tries and time out of %f", max_num_tries, max_duration.toSec());
-
     }
     else if (type_lower == "drink_cocktail") {
         ROS_INFO("I will get you a drink in %d tries and time out of %f", max_num_tries, max_duration.toSec());
-
     }
     else if (type_lower == "room_cleanup") {
         // USED IN CLEANUP!!!
         ROS_INFO("I will get you a room in %d tries and time out of %f", max_num_tries, max_duration.toSec());
-
     }
     else if (type_lower == "demo_challenge_breakfast") {
-        ROS_INFO("I will get you what you want on your sandwich in %d tries and time out of %f", max_num_tries, max_duration.toSec());
-
+        ROS_INFO("I will get you a breakfast option in %d tries and time out of %f", max_num_tries, max_duration.toSec());
+        iExplainedLights = true;
     }
     else if (type_lower == "demo_challenge_status_person") {
         ROS_INFO("I will get you the status in %d tries and time out of %f", max_num_tries, max_duration.toSec());
-
+        iExplainedLights = true;
     }
-    else if (type_lower == "demo_challenge_anything_else") {
-        ROS_INFO("I will get you what you want on your sandwich in %d tries and time out of %f", max_num_tries, max_duration.toSec());
-
+    else if (type_lower == "anything_else") {
+        ROS_INFO("I will get you an answer in %d tries and time out of %f", max_num_tries, max_duration.toSec());
+        iExplainedLights = true;
+    }
+    else if (type_lower == "remind_time") {
+        ROS_INFO("I will get you an answer in %d tries and time out of %f", max_num_tries, max_duration.toSec());
+        iExplainedLights = true;
+    }
+    else if (type_lower == "remind_action") {
+        ROS_INFO("I will get you an answer in %d tries and time out of %f", max_num_tries, max_duration.toSec());
+        iExplainedLights = true;
     }
     else if (type_lower == "name_maxima") {
         ROS_INFO("I will get you your name in %d tries and time out of %f", max_num_tries, max_duration.toSec());
-
     }
     else if (type_lower == "object_classes") {
         ROS_INFO("I will get you your object class in %d tries and time out of %f", max_num_tries, max_duration.toSec());
@@ -280,6 +286,17 @@ bool Interpreter::getInfo(const std::string& type, const ros::Duration& max_dura
 			return false;
 		}
 	}
+
+    if (iExplainedLights == false) {
+        // Explain lights during questioning:
+        // Red: Amigo talks
+        // Green: Questioner talks
+        setColor(1,0,0); // color red
+        std::string explaining_txt = "Would you please answer the questions when my lights become green.";
+        amigoSpeak(explaining_txt);
+
+        iExplainedLights = true;
+    }
 
     response = askUser(type_lower, max_num_tries, max_duration.toSec());
 	ROS_INFO("Answer is %s", response.c_str());
@@ -1220,7 +1237,7 @@ bool Interpreter::waitForAnswer(std::string category, double t_max) {
     setColor(1,0,0); // color red
 
     // If input is more than one word -> only pick the first word:
-    if (answer_.size() > 2 && ! (category == "sentences") && ! (category == "demo_challenge_anything_else")) {
+    if (answer_.size() > 2 && ! (category == "sentences")) {
         unsigned found=answer_.find(" ");
         std::string part = answer_.substr(0,found);
         answer_= part;
@@ -1319,18 +1336,25 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
         starting_txt = "What do you want me to do";
     } else if (type == "open_challenge") {
         starting_txt = "Where do you want me to go";
-    } else if (type == "demo_challenge_breakfast" || type =="demo_challenge_status_person" || type =="demo_challenge_anything_else" || type =="side" || type =="numbers") {
+    } else if (type == "demo_challenge_breakfast") {
+        starting_txt = "";
+        type == "breakfast";
+    } else if (type == "demo_challenge_status_person") {
+        starting_txt = "";
+        type == "status_person";
+    } else if (type =="anything_else" || type =="remind_time" || type =="remind_action" || type =="side" || type =="numbers") {
         starting_txt = "";
     } else if (type == "drink_cocktail") {
         std::vector<std::string> possible_text;
-//        possible_text.push_back("Could you please tell me what drink you want?");
-//        possible_text.push_back("What drink would you like to have?");
-//        possible_text.push_back("Which drink can I serve you?");
+        possible_text.push_back("Could you please tell me what drink you want?");
+        possible_text.push_back("What drink would you like to have?");
+        possible_text.push_back("Which drink can I serve you?");
 
-        possible_text.push_back("Do you want a coke or a seven up, that's all we have left. Please say either coke or seven up.");
+//        possible_text.push_back("Do you want a coke or a seven up, that's all we have left. Please say either coke or seven up.");   // was for maxima
 
         starting_txt = getSentence(possible_text);
-        type = "drinks_maxima";
+        type = "drinks";
+        //type = "drinks_maxima";
 
         // TODO CHANGE THIS TO DRINK IN EINDHOVEN!
 
@@ -1446,6 +1470,17 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 sentence = getSentence(possible_text);
                 amigoSpeak(sentence);
             }
+            else if ( type == "remind_action" || type == "remind_time") {
+                amigoSpeak("You said " + result);
+                std::vector<std::string> possible_text;
+                possible_text.push_back("Corect?"); //Amigo's output with "corect?" is better than "correct?"
+                possible_text.push_back("Right?");
+                possible_text.push_back("Okay?");
+                possible_text.push_back("Alright?");
+                std::string sentence;
+                sentence = getSentence(possible_text);
+                amigoSpeak(sentence);
+            }
             else {
                 amigoSpeak("I heard " + result);
                 std::vector<std::string> possible_text;
@@ -1457,6 +1492,10 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                 sentence = getSentence(possible_text);
                 amigoSpeak(sentence);
             }
+
+
+
+
 
             // If answer received, ask for confirmation
             if (waitForAnswer("yesno", 10.0)) {
@@ -1599,9 +1638,11 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                         amigoSpeak(sentence);
                     }
                     else if (type == "object_or_location" ||
-                             type == "demo_challenge_breakfast" ||
-                             type == "demo_challenge_status_person" ||
-                             type == "demo_challenge_anything_else" ||
+                             type == "breakfast" ||
+                             type == "status_person" ||
+                             type == "anything_else" ||
+                             type == "remind_action" ||
+                             type == "remind_time" ||
                              type == "kitchen" ||
                              type == "livingroom" ||
                              type == "bedroom" ||
@@ -1612,12 +1653,16 @@ std::string Interpreter::askUser(std::string type, const unsigned int n_tries_ma
                         std::vector<std::string> possible_text;
                         if (type == "object_or_location") {
                             possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you tell me again if it should be an object or location?");
-                        } else if (type == "demo_challenge_breakfast") {
+                        } else if (type == "breakfast") {
                             possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you tell me again what you want for your breakfast?");
-                        } else if (type == "demo_challenge_status_person") {
+                        } else if (type == "status_person") {
                             possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you tell me again how you feel?");
-                        } else if (type == "demo_challenge_anything_else") {
+                        } else if (type == "anything_else") {
                             possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you tell me again if I can do anything else?");
+                        } else if (type == "remind_action") {
+                            possible_text.push_back("I'm sorry, I didn't hear a confirmation. Remind you of what?");
+                        } else if (type == "remind_time") {
+                            possible_text.push_back("I'm sorry, I didn't hear a confirmation. When is it?");
                         } else if (type == "kitchen") {
                             possible_text.push_back("I'm sorry, I didn't hear a confirmation. Could you give me the exact location again?");
                         } else if (type == "livingroom") {
@@ -2541,7 +2586,7 @@ bool Interpreter::getYesNo(const ros::Duration& max_duration, unsigned int max_n
                else {
                    std::vector<std::string> possible_text;
                    possible_text.push_back("Could you repeat your answer?");
-                   possible_text.push_back("Just to be sure, please repeat your answer.");
+                   possible_text.push_back("Just to be sure, please repeat your max_durationanswer.");
                    std::string sentence;
                    sentence = getSentence(possible_text);
                    amigoSpeak(sentence);
@@ -3061,6 +3106,85 @@ bool Interpreter::getOpenChallenge(const ros::Duration& max_duration, unsigned i
     setColor(0,0,1); // color blue
     return true;
 }
+
+/**
+ * Service that asks to which location to go, specific for open challenge magdeburg 2013
+ */
+bool Interpreter::getAnythingElse(const ros::Duration& max_duration, unsigned int max_num_tries, std::map<std::string, std::string>& answer) {
+
+    // Initial response is to clean up the livingroom
+    answer["answer"] = "no_answer";
+
+    // Get variables
+    unsigned int n_tries = 0;
+    double t_start = ros::Time::now().toSec();
+    double t_max_question = 10.0;
+    std::string result = "";
+    std::string result_remind_action = "";
+    std::string result_remind_time = "";
+
+    ROS_INFO("I will try to receive continue %d tries and time out of %f", max_num_tries, max_duration.toSec());
+
+    while ((ros::Time::now().toSec() - t_start < max_duration.toSec() && n_tries < max_num_tries)  && ros::ok()) {
+        if (waitForAnswer("anything_else", t_max_question)) {
+            setColor(1,0,0); // color red
+            result = answer_;
+            ROS_INFO("result = '%s'",result.c_str());
+
+            if (result == "what is the time") {
+                // amigoSpeak("Alright");       NO ANSWER, TIME IS DIRECTLY GIVEN.
+                answer["answer"] = result;
+                setColor(0,0,1); // color blue
+                return true;
+            }
+            else if (result == "email a reminder") {
+                // Get action reminder
+                amigoSpeak("About what?");
+
+                if (waitForAnswer("remind_action", max_duration.toSec() - (ros::Time::now().toSec() - t_start))) {
+                    result = answer_;
+                    result_remind_action = result;
+                }
+                else {
+                    amigoSpeak("I could not understand you, but I know your agenda and you should take your medicine today. I will remind you on that.");
+                    result_remind_action = "to take my medicine";
+                }
+
+                // Get time reminder
+                amigoSpeak("When is it?");
+                if (waitForAnswer("remind_time", max_duration.toSec() - (ros::Time::now().toSec() - t_start))) {
+                    result = answer_;
+                    result_remind_time = result;
+                }
+                else {
+                    amigoSpeak("I could not understand you, I'll just put the reminder in 10 minutes.");
+                    result_remind_time = "in ten minutes";
+                }
+
+                // Repeat full action
+                std::string space = " ";
+                std::string answer_remind = "So I will remind you " + result_remind_action + space + result_remind_time;
+                amigoSpeak(answer_remind);
+                answer["answer"] = "remind me " + result_remind_action + space + result_remind_time;
+                setColor(0,0,1); // color blue
+                return true;
+            }
+        }
+        else {
+            answer["answer"] = "no_answer";
+            n_tries++;
+            if (!(n_tries == max_num_tries)){
+                amigoSpeak("I did not understand you, let's try again");
+            }
+            else {
+                amigoSpeak("I did not understand you for a longer time, I'm sorry.");
+            }
+        }
+    }
+    setColor(0,0,1); // color blue
+    return true;
+}
+
 
 int Interpreter::getPosString(std::string input_text, std::string found_text) {
 

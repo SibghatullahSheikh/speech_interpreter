@@ -23,6 +23,7 @@
 #include "speech_interpreter/GetYesNo.h"
 #include "speech_interpreter/GetCleanup.h"
 #include "speech_interpreter/GetOpenChallenge.h"
+#include "speech_interpreter/GetAnythingElse.h"
 
 #include "speech_interpreter/AskUser.h"
 
@@ -56,6 +57,7 @@ public:
     bool getYesNoSrv(speech_interpreter::GetYesNo::Request  &req, speech_interpreter::GetYesNo::Response &res);
     bool getCleanupSrv(speech_interpreter::GetCleanup::Request  &req, speech_interpreter::GetCleanup::Response &res);
     bool getOpenChallengeSrv(speech_interpreter::GetOpenChallenge::Request  &req, speech_interpreter::GetOpenChallenge::Response &res);
+    bool getAnythingElseSrv(speech_interpreter::GetAnythingElse::Request  &req, speech_interpreter::GetAnythingElse::Response &res);
 
     bool askUser(speech_interpreter::AskUser::Request  &req, speech_interpreter::AskUser::Response &res);
 
@@ -64,7 +66,9 @@ public:
     bool getYesNo(const ros::Duration& max_duration, unsigned int max_num_tries, std::map<std::string, std::string>& answer);
     bool getCleanup(const ros::Duration& max_duration, unsigned int max_num_tries, std::map<std::string, std::string>& answer);
     bool getOpenChallenge(const ros::Duration& max_duration, unsigned int max_num_tries, std::map<std::string, std::string>& answer);
+    bool getAnythingElse(const ros::Duration& max_duration, unsigned int max_num_tries, std::map<std::string, std::string>& answer);
     bool getInfo(const std::string& type, const ros::Duration& max_duration, unsigned int max_num_tries, std::map<std::string, std::string>& answer);
+
 
 	/**
 	 * Callbacks
@@ -122,6 +126,7 @@ public:
     ros::ServiceServer yes_no_service_;
     ros::ServiceServer cleanup_service_;
     ros::ServiceServer open_challenge_service_;
+    ros::ServiceServer anything_else_service_;
 
     ros::ServiceServer ask_user_service_;
 
